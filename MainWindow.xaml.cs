@@ -31,8 +31,8 @@ namespace LibraryManagementFE
                 ["dashboard"] = () => new DashboardView(),
                 ["books"]     = () => new BooksView(),
                 ["readers"]   = () => new ReadersView(),
-                ["borrow"]    = () => BuildPlaceholder("Mượn / Trả sách"),
-                ["reports"]   = () => BuildPlaceholder("Báo cáo & Thống kê"),
+                ["borrow"]    = () => new BorrowReturnView(),
+                ["reports"]   = () => new ReportsStatisticsView(),
             };
 
             Loaded += (_, _) => ApplyNavSidebarVisuals("dashboard");
@@ -62,8 +62,8 @@ namespace LibraryManagementFE
                 "dashboard" => "Tổng quan Hệ thống",
                 "books"     => "Quản lý Sách",
                 "readers"   => "Quản lý Độc giả",
-                "borrow"    => "Mượn / Trả sách",
-                "reports"   => "Báo cáo & Thống kê",
+                "borrow"    => "Quản lý Mượn/Trả",
+                "reports"   => "Báo cáo Thống kê",
                 _           => "Hệ thống Thư viện",
             };
         }
