@@ -1,0 +1,404 @@
+<UserControl x:Class="LibraryManagementFE.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:LibraryManagementFE.ViewModels"
+             xmlns:ctrl="clr-namespace:LibraryManagementFE.Controls"
+             xmlns:models="clr-namespace:LibraryManagementFE.Models"
+             Background="{StaticResource BgBrush}">
+
+    <UserControl.DataContext>
+        <vm:DashboardViewModel/>
+    </UserControl.DataContext>
+
+    <!-- Scrollable main content -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="32,32,32,70" MinWidth="600">
+
+            <!-- ══════════════════════════════════════
+                 SECTION 1 – Metric Cards
+            ══════════════════════════════════════ -->
+            <UniformGrid Rows="1" Columns="4" HorizontalAlignment="Stretch"
+                         Margin="0,0,0,32">
+
+                <!-- Card 1: Tổng số sách -->
+                <ctrl:MetricCard Margin="0,0,12,0"
+                    Value="{Binding TotalBooks}"
+                    Label="Tổng số sách"
+                    BadgeText="{Binding TotalBooksBadge}"
+                    BadgeBackground="{StaticResource Success50Brush}"
+                    BadgeForeground="{StaticResource SuccessBrush}"
+                    IconBackground="{StaticResource Brand50Brush}">
+                    <ctrl:MetricCard.IconContent>
+                        <!-- Book icon -->
+                        <Viewbox>
+                            <Canvas Width="16" Height="20">
+                                <Rectangle Canvas.Left="1" Canvas.Top="1"
+                                           Width="14" Height="18" RadiusX="2" RadiusY="2"
+                                           Stroke="#0045BD" StrokeThickness="1.5" Fill="Transparent"/>
+                                <Line X1="4" Y1="7" X2="12" Y2="7"
+                                      Stroke="#0045BD" StrokeThickness="1.2"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="4" Y1="10" X2="12" Y2="10"
+                                      Stroke="#0045BD" StrokeThickness="1.2"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Line X1="4" Y1="13" X2="9" Y2="13"
+                                      Stroke="#0045BD" StrokeThickness="1.2"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            </Canvas>
+                        </Viewbox>
+                    </ctrl:MetricCard.IconContent>
+                </ctrl:MetricCard>
+
+                <!-- Card 2: Đang được mượn -->
+                <ctrl:MetricCard Margin="6,0,6,0"
+                    Value="{Binding BorrowedBooks}"
+                    Label="Đang được mượn"
+                    BadgeText="{Binding BorrowedBadge}"
+                    BadgeBackground="{StaticResource Success50Brush}"
+                    BadgeForeground="{StaticResource SuccessBrush}"
+                    IconBackground="{StaticResource Cyan50Brush}">
+                    <ctrl:MetricCard.IconContent>
+                        <Viewbox>
+                            <Canvas Width="21" Height="17">
+                                <Path Data="M1 8.5 L10.5 2 L20 8.5" Stroke="#0891B2" StrokeThickness="1.5"
+                                      StrokeLineJoin="Round" Fill="Transparent"/>
+                                <Rectangle Canvas.Left="4" Canvas.Top="7" Width="13" Height="9"
+                                           RadiusX="1" RadiusY="1"
+                                           Stroke="#0891B2" StrokeThickness="1.5" Fill="Transparent"/>
+                            </Canvas>
+                        </Viewbox>
+                    </ctrl:MetricCard.IconContent>
+                </ctrl:MetricCard>
+
+                <!-- Card 3: Độc giả đang hoạt động -->
+                <ctrl:MetricCard Margin="6,0,6,0"
+                    Value="{Binding ActiveReaders}"
+                    Label="Độc giả đang hoạt động"
+                    BadgeText="{Binding ActiveBadge}"
+                    BadgeBackground="{StaticResource Surface100Brush}"
+                    BadgeForeground="{StaticResource TextDisabledBrush}"
+                    IconBackground="{StaticResource Purple100Brush}">
+                    <ctrl:MetricCard.IconContent>
+                        <Viewbox>
+                            <Canvas Width="16" Height="16">
+                                <Ellipse Canvas.Left="1" Canvas.Top="1" Width="5" Height="5"
+                                         Stroke="#9333EA" StrokeThickness="1.5" Fill="Transparent"/>
+                                <Ellipse Canvas.Left="9" Canvas.Top="1" Width="5" Height="5"
+                                         Stroke="#9333EA" StrokeThickness="1.5" Fill="Transparent"/>
+                                <Path Data="M0 15 Q0 10 3.5 10 Q6 10 8 12 Q10 10 12.5 10 Q16 10 16 15"
+                                      Stroke="#9333EA" StrokeThickness="1.3" Fill="Transparent"
+                                      StrokeLineJoin="Round"/>
+                            </Canvas>
+                        </Viewbox>
+                    </ctrl:MetricCard.IconContent>
+                </ctrl:MetricCard>
+
+                <!-- Card 4: Sách trả trễ -->
+                <ctrl:MetricCard Margin="12,0,0,0"
+                    Value="{Binding OverdueBooks}"
+                    Label="Sách trả trễ"
+                    BadgeText="{Binding OverdueBadge}"
+                    BadgeBackground="{StaticResource Danger100Brush}"
+                    BadgeForeground="{StaticResource DangerBrush}"
+                    IconBackground="{StaticResource Danger100Brush}">
+                    <ctrl:MetricCard.IconContent>
+                        <Viewbox>
+                            <Canvas Width="22" Height="19">
+                                <Path Data="M11 2 L21 17 H1 Z"
+                                      Stroke="#BA1A1A" StrokeThickness="1.5"
+                                      StrokeLineJoin="Round" Fill="Transparent"/>
+                                <Line X1="11" Y1="8" X2="11" Y2="12"
+                                      Stroke="#BA1A1A" StrokeThickness="1.5"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Ellipse Canvas.Left="10" Canvas.Top="14" Width="2" Height="2"
+                                         Fill="#BA1A1A"/>
+                            </Canvas>
+                        </Viewbox>
+                    </ctrl:MetricCard.IconContent>
+                </ctrl:MetricCard>
+
+            </UniformGrid>
+
+            <!-- ══════════════════════════════════════
+                 SECTION 2 – Charts row
+            ══════════════════════════════════════ -->
+            <Grid Height="374" Margin="0,0,0,32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="304"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ── Borrowing Trends Card ── -->
+                <Border Grid.Column="0" Style="{StaticResource Card}" Padding="24">
+                    <StackPanel>
+                        <!-- Header -->
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="Xu hướng mượn sách"
+                                       Style="{StaticResource Text.Heading2}"/>
+                            <!-- Toggle buttons -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button x:Name="BtnWeek"
+                                        Content="Tuần"
+                                        Style="{StaticResource ToggleChartBtn}"
+                                        Margin="0,0,8,0"
+                                        Click="BtnWeek_Click"/>
+                                <Button x:Name="BtnMonth"
+                                        Content="Tháng"
+                                        Style="{StaticResource ToggleChartBtn.Active}"
+                                        Click="BtnMonth_Click"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Bar Chart -->
+                        <ItemsControl ItemsSource="{Binding ChartItems}"
+                                      Height="248" VerticalAlignment="Bottom">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="1"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:BarChartItem}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="20"/>
+                                        </Grid.RowDefinitions>
+                                        <!-- bar -->
+                                        <Border Grid.Row="0"
+                                                VerticalAlignment="Bottom"
+                                                CornerRadius="8,8,0,0"
+                                                Background="{Binding Fill}"
+                                                Margin="4,0"
+                                                Height="{Binding RelativeHeight,
+                                                         Converter={StaticResource PercentHeightConverter},
+                                                         ConverterParameter=220}"/>
+                                        <!-- label -->
+                                        <TextBlock Grid.Row="1"
+                                                   Text="{Binding MonthLabel}"
+                                                   FontFamily="{StaticResource InterFont}"
+                                                   FontSize="11" FontWeight="Medium"
+                                                   Foreground="{StaticResource TextDisabledBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Category Breakdown Card ── -->
+                <Border Grid.Column="2" Style="{StaticResource Card}" Padding="24">
+                    <DockPanel LastChildFill="False">
+                        <!-- Title -->
+                        <TextBlock DockPanel.Dock="Top"
+                                   Text="Thể loại phổ biến"
+                                   Style="{StaticResource Text.Heading2}"
+                                   Margin="0,0,0,24"/>
+
+                        <!-- Category rows -->
+                        <ItemsControl DockPanel.Dock="Top"
+                                      ItemsSource="{Binding Categories}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:CategoryItem}">
+                                    <StackPanel Margin="0,0,0,24">
+                                        <!-- Name + Count -->
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Name}"
+                                                       FontFamily="{StaticResource InterFont}"
+                                                       FontSize="14" FontWeight="Medium"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Count, StringFormat={}{0:N0}}"
+                                                       FontFamily="{StaticResource InterFont}"
+                                                       FontSize="14"
+                                                       Foreground="{StaticResource TextMutedBrush}"/>
+                                        </Grid>
+                                        <!-- Progress bar -->
+                                        <ProgressBar Style="{StaticResource CategoryBar}"
+                                                     Value="{Binding Percentage}"
+                                                     Minimum="0" Maximum="1"
+                                                     Foreground="{Binding BarColor}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+            <!-- ══════════════════════════════════════
+                 SECTION 3 – Transactions Table
+            ══════════════════════════════════════ -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <!-- Table header bar -->
+                    <Border BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="0,0,0,1"
+                            Padding="24">
+                        <TextBlock Text="Giao dịch gần đây"
+                                   Style="{StaticResource Text.Heading2}"/>
+                    </Border>
+
+                    <!-- DataGrid -->
+                    <DataGrid ItemsSource="{Binding Transactions}"
+                              Style="{StaticResource DataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}"
+                              RowStyle="{StaticResource DataGridRowStyle}"
+                              CellStyle="{StaticResource DataGridCellStyle}"
+                              SelectionChanged="Transactions_SelectionChanged">
+
+                        <!-- Col 1: Tên sách + Thể loại -->
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="TÊN SÁCH" Width="*" MinWidth="200">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                            <!-- Book thumbnail -->
+                                            <Border Width="32" Height="40"
+                                                    Background="{StaticResource Brand100Brush}"
+                                                    CornerRadius="4"
+                                                    Margin="0,0,12,0"
+                                                    VerticalAlignment="Center">
+                                                <Viewbox Width="16" Height="12">
+                                                    <Canvas Width="16" Height="12">
+                                                        <Rectangle Width="16" Height="12" RadiusX="1.5" RadiusY="1.5"
+                                                                   Fill="#135BEC"/>
+                                                    </Canvas>
+                                                </Viewbox>
+                                            </Border>
+                                            <!-- Title + genre -->
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding BookTitle}"
+                                                           FontFamily="{StaticResource InterFont}"
+                                                           FontSize="14" FontWeight="Medium"
+                                                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                <TextBlock Text="{Binding Genre}"
+                                                           FontFamily="{StaticResource InterFont}"
+                                                           FontSize="12"
+                                                           Foreground="{StaticResource TextMutedBrush}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Col 2: Độc giả -->
+                            <DataGridTextColumn Header="ĐỘC GIẢ"
+                                                Binding="{Binding Reader}"
+                                                Width="160"
+                                                ElementStyle="{StaticResource Text.Body}"/>
+
+                            <!-- Col 3: Hạn trả -->
+                            <DataGridTextColumn Header="HẠN TRẢ"
+                                                Binding="{Binding DueDate}"
+                                                Width="150"
+                                                ElementStyle="{StaticResource Text.Body}"/>
+
+                            <!-- Col 4: Trạng thái -->
+                            <DataGridTemplateColumn Header="TRẠNG THÁI" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ContentControl Content="{Binding}">
+                                            <ContentControl.Style>
+                                                <Style TargetType="ContentControl">
+                                                    <Style.Triggers>
+                                                        <!-- Đã trả – green -->
+                                                        <DataTrigger Binding="{Binding Status}"
+                                                                     Value="{x:Static models:TransactionStatus.DaTra}">
+                                                            <Setter Property="ContentTemplate">
+                                                                <Setter.Value>
+                                                                    <DataTemplate>
+                                                                        <Border Style="{StaticResource Badge.Success}">
+                                                                            <TextBlock Text="{Binding StatusText}"
+                                                                                       FontFamily="{StaticResource InterFont}"
+                                                                                       FontSize="12"
+                                                                                       Foreground="{StaticResource Green700Brush}"/>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </DataTrigger>
+                                                        <!-- Đang mượn – blue -->
+                                                        <DataTrigger Binding="{Binding Status}"
+                                                                     Value="{x:Static models:TransactionStatus.DangMuon}">
+                                                            <Setter Property="ContentTemplate">
+                                                                <Setter.Value>
+                                                                    <DataTemplate>
+                                                                        <Border Style="{StaticResource Badge.Info}">
+                                                                            <TextBlock Text="{Binding StatusText}"
+                                                                                       FontFamily="{StaticResource InterFont}"
+                                                                                       FontSize="12"
+                                                                                       Foreground="{StaticResource BrandDarkBrush}"/>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </DataTrigger>
+                                                        <!-- Quá hạn – red -->
+                                                        <DataTrigger Binding="{Binding Status}"
+                                                                     Value="{x:Static models:TransactionStatus.QuaHan}">
+                                                            <Setter Property="ContentTemplate">
+                                                                <Setter.Value>
+                                                                    <DataTemplate>
+                                                                        <Border Style="{StaticResource Badge.Danger}">
+                                                                            <TextBlock Text="{Binding StatusText}"
+                                                                                       FontFamily="{StaticResource InterFont}"
+                                                                                       FontSize="12"
+                                                                                       Foreground="{StaticResource DangerBrush}"/>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ContentControl.Style>
+                                        </ContentControl>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!-- Col 5: Thao tác -->
+                            <DataGridTemplateColumn Header="THAO TÁC" Width="110">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource IconButton}"
+                                                ToolTip="Xem chi tiết"
+                                                Click="BtnRowAction_Click"
+                                                Tag="{Binding}">
+                                            <!-- Vertical ellipsis icon -->
+                                            <StackPanel Orientation="Vertical"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center">
+                                                <Ellipse Width="3.5" Height="3.5" Fill="{StaticResource TextDisabledBrush}" Margin="0,0,0,2"/>
+                                                <Ellipse Width="3.5" Height="3.5" Fill="{StaticResource TextDisabledBrush}" Margin="0,0,0,2"/>
+                                                <Ellipse Width="3.5" Height="3.5" Fill="{StaticResource TextDisabledBrush}"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

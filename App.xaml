@@ -1,0 +1,22 @@
+<Application x:Class="LibraryManagementFE.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:LibraryManagementFE.Converters"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 1. Color tokens first (ControlStyles depends on them) -->
+                <ResourceDictionary Source="/Themes/Colors.xaml"/>
+                <!-- 2. All reusable control styles -->
+                <ResourceDictionary Source="/Themes/ControlStyles.xaml"/>
+                <ResourceDictionary Source="/Themes/BooksPageStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- ── Value Converters (app-wide singletons) ── -->
+            <converters:PercentHeightConverter x:Key="PercentHeightConverter"/>
+            <converters:StatusTextConverter    x:Key="StatusTextConverter"/>
+            <converters:HexBrushConverter      x:Key="ColorHexConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
