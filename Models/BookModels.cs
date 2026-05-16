@@ -14,6 +14,7 @@ namespace LibraryManagementFE.Models
         public string CategoryLine1 { get; set; } = string.Empty;
         public string CategoryLine2 { get; set; } = string.Empty;
         public string CoverImagePath { get; set; } = string.Empty;
+        public DateTime AddedDate { get; set; } = DateTime.Now;
 
         /// <summary>Pill background (#EFF6FF CNTT, #FAF5FF tím…)</summary>
         public string CategoryPillBg { get; set; } = "#EFF6FF";

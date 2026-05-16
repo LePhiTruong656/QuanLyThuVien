@@ -8,7 +8,7 @@ using LibraryManagementFE.Views;
 
 namespace LibraryManagementFE.ViewModels
 {
-    /// <summary>MVVM layer for Quản lý Sách (Figma: search, table, pagination, stats).</summary>
+    /// <summary>MVVM layer for Quan ly Sach (Figma: search, table, pagination, stats).</summary>
     public class BooksViewModel : INotifyPropertyChanged
     {
         private const int PageSize = 5;
@@ -42,10 +42,10 @@ namespace LibraryManagementFE.ViewModels
             new BookRecord
             {
                 Stt = 3,
-                Title = "Mắt Biếc",
-                Author = "Nguyễn Nhật Ánh",
-                CategoryLine1 = "Văn",
-                CategoryLine2 = "học",
+                Title = "Mat Biec",
+                Author = "Nguyen Nhat Anh",
+                CategoryLine1 = "Van",
+                CategoryLine2 = "hoc",
                 CategoryPillBg = "#FAF5FF",
                 CategoryPillFg = "#9333EA",
                 Year = 1990,
@@ -56,11 +56,57 @@ namespace LibraryManagementFE.ViewModels
         public ObservableCollection<BookRecord> PagedBooks { get; } = new();
         public ObservableCollection<PageNumberItem> PageNumbers { get; } = new();
 
-        public string TotalBooksDisplay => "1.240";
-        public string NewThisMonthDisplay => "42";
-        public string BorrowedDisplay => "86";
+        public string TotalBooksDisplay => Books.Count.ToString();
+        public string NewThisMonthDisplay => Books.Count(book =>
+            book.AddedDate.Month == DateTime.Now.Month && book.AddedDate.Year == DateTime.Now.Year).ToString();
+        public string BorrowedDisplay => Books.Count(book => book.Availability == BookAvailability.DangMuon).ToString();
 
-        public int TotalPages => Math.Max(1, (int)Math.Ceiling(Books.Count / (double)PageSize));
+        private int? _filterYear;
+        private BookAvailability? _filterAvailability;
+        private DateTime? _filterAddedFrom;
+        private DateTime? _filterAddedTo;
+
+        private IEnumerable<BookRecord> FilteredBooks
+        {
+            get
+            {
+                IEnumerable<BookRecord> query = Books;
+
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    var keyword = SearchText.Trim();
+                    query = query.Where(book =>
+                        book.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                        book.Author.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                        book.CategoryLine1.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                        book.CategoryLine2.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (_filterYear is int year)
+                {
+                    query = query.Where(book => book.Year == year);
+                }
+
+                if (_filterAvailability is BookAvailability availability)
+                {
+                    query = query.Where(book => book.Availability == availability);
+                }
+
+                if (_filterAddedFrom is DateTime addedFrom)
+                {
+                    query = query.Where(book => book.AddedDate.Date >= addedFrom.Date);
+                }
+
+                if (_filterAddedTo is DateTime addedTo)
+                {
+                    query = query.Where(book => book.AddedDate.Date <= addedTo.Date);
+                }
+
+                return query;
+            }
+        }
+
+        public int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredBooks.Count() / (double)PageSize));
 
         private int _currentPage = 1;
         public int CurrentPage
@@ -83,14 +129,15 @@ namespace LibraryManagementFE.ViewModels
         {
             get
             {
-                if (Books.Count == 0)
+                var total = FilteredBooks.Count();
+                if (total == 0)
                 {
                     return "Hiển thị 0 của 0 đầu sách";
                 }
 
                 var start = ((CurrentPage - 1) * PageSize) + 1;
-                var end = Math.Min(CurrentPage * PageSize, Books.Count);
-                return $"Hiển thị {start} - {end} của {Books.Count} đầu sách";
+                var end = Math.Min(CurrentPage * PageSize, total);
+                return $"Hiển thị {start} - {end} của {total} đầu sách";
             }
         }
 
@@ -98,7 +145,17 @@ namespace LibraryManagementFE.ViewModels
         public string SearchText
         {
             get => _searchText;
-            set { _searchText = value; OnPropertyChanged(); }
+            set
+            {
+                if (_searchText == value)
+                {
+                    return;
+                }
+
+                _searchText = value;
+                OnPropertyChanged();
+                GoToPage(1);
+            }
         }
 
         public ICommand FilterCommand { get; }
@@ -111,8 +168,7 @@ namespace LibraryManagementFE.ViewModels
 
         public BooksViewModel()
         {
-            FilterCommand = new RelayCommand(_ =>
-                MessageBox.Show("Bộ lọc nâng cao đang phát triển.", "Thông báo", MessageBoxButton.OK));
+            FilterCommand = new RelayCommand(OpenFilterDialog);
 
             AddBookCommand = new RelayCommand(OpenAddBookDialog);
 
@@ -172,7 +228,29 @@ namespace LibraryManagementFE.ViewModels
                     Books.Add(book);
                 }
 
+                RefreshStats();
                 GoToPage(TotalPages);
+            }
+        }
+
+        private void OpenFilterDialog(object? _)
+        {
+            var dialog = new BookFilterWindow(
+                _filterYear,
+                _filterAvailability,
+                _filterAddedFrom,
+                _filterAddedTo)
+            {
+                Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                _filterYear = dialog.SelectedYear;
+                _filterAvailability = dialog.SelectedAvailability;
+                _filterAddedFrom = dialog.AddedFrom;
+                _filterAddedTo = dialog.AddedTo;
+                GoToPage(1);
             }
         }
 
@@ -193,6 +271,7 @@ namespace LibraryManagementFE.ViewModels
 
                 editedBook.Stt = book.Stt;
                 Books[index] = editedBook;
+                RefreshStats();
                 RefreshPagedBooks();
             }
         }
@@ -206,18 +285,30 @@ namespace LibraryManagementFE.ViewModels
 
             if (dialog.ShowDialog() == true)
             {
+                var index = Books.IndexOf(book);
                 Books.Remove(book);
-                ReorderBooks();
+                ReorderBooks(index);
+                RefreshStats();
                 GoToPage(Math.Min(CurrentPage, TotalPages));
             }
         }
 
-        private void ReorderBooks()
+        private void ReorderBooks(int startIndex)
         {
-            for (var index = 0; index < Books.Count; index++)
+            for (var index = Math.Max(0, startIndex); index < Books.Count; index++)
             {
                 Books[index].Stt = index + 1;
             }
+        }
+
+        private void RefreshStats()
+        {
+            OnPropertyChanged(nameof(TotalBooksDisplay));
+            OnPropertyChanged(nameof(NewThisMonthDisplay));
+            OnPropertyChanged(nameof(BorrowedDisplay));
+            OnPropertyChanged(nameof(TotalPages));
+            OnPropertyChanged(nameof(PaginationInfo));
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private void GoToPage(int page)
@@ -233,8 +324,9 @@ namespace LibraryManagementFE.ViewModels
                 CurrentPage = TotalPages;
             }
 
+            var filteredBooks = FilteredBooks.ToList();
             PagedBooks.Clear();
-            foreach (var book in Books.Skip((CurrentPage - 1) * PageSize).Take(PageSize))
+            foreach (var book in filteredBooks.Skip((CurrentPage - 1) * PageSize).Take(PageSize))
             {
                 PagedBooks.Add(book);
             }
