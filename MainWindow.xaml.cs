@@ -23,6 +23,7 @@ namespace LibraryManagementFE
                 ["books"]     = NavBooks,
                 ["readers"]   = NavReaders,
                 ["borrow"]    = NavBorrow,
+                ["rules"]     = NavRules,
                 ["reports"]   = NavReports,
             };
 
@@ -32,6 +33,7 @@ namespace LibraryManagementFE
                 ["books"]     = () => new BooksView(),
                 ["readers"]   = () => new ReadersView(),
                 ["borrow"]    = () => new BorrowReturnView(),
+                ["rules"]     = () => new RulesConfigView(),
                 ["reports"]   = () => new ReportsStatisticsView(),
             };
 
@@ -64,7 +66,7 @@ namespace LibraryManagementFE
                 "readers"   => "Quản lý Độc giả",
                 "borrow"    => "Quản lý Mượn/Trả",
                 "reports"   => "Báo cáo Thống kê",
-                _           => "Hệ thống Thư viện",
+                _           => "Quy định nghiệp vụ",
             };
         }
 
@@ -85,6 +87,7 @@ namespace LibraryManagementFE
             ApplyStrokeNavItem(activeTag == "books", NavBooksTitle, NavBooks, white, muted);
             ApplyStrokeNavItem(activeTag == "readers", NavReadersTitle, NavReaders, white, muted);
             ApplyStrokeNavItem(activeTag == "borrow", NavBorrowTitle, NavBorrow, white, muted);
+            ApplyStrokeNavItem(activeTag == "rules", NavRulesTitle, NavRules, white, muted);
             ApplyStrokeNavItem(activeTag == "reports", NavReportsTitle, NavReports, white, muted);
         }
 
@@ -176,6 +179,10 @@ namespace LibraryManagementFE
                     }
                 }
             };
+        }
+
+        private void DashboardView_Loaded(object sender, RoutedEventArgs e) {
+
         }
     }
 }

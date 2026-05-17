@@ -184,6 +184,33 @@
                     </Button>
 
                     <!-- Báo cáo -->
+                    <!-- Quy định -->
+                    <Button x:Name="NavRules"
+                            Style="{StaticResource NavLink}"
+                            HorizontalAlignment="Stretch"
+                            Margin="0,0,0,4"
+                            Click="Nav_Click" Tag="rules">
+                        <StackPanel Orientation="Horizontal">
+                            <Viewbox Width="17" Height="14" Margin="0,0,12,0">
+                                <Canvas Width="17" Height="14">
+                                    <Rectangle Canvas.Left="2" Canvas.Top="2" Width="13" Height="10"
+                                               RadiusX="2" RadiusY="2"
+                                               Stroke="#64748B" StrokeThickness="1.5" Fill="Transparent"/>
+                                    <Line X1="5" Y1="6" X2="12" Y2="6" Stroke="#64748B" StrokeThickness="1.2"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                    <Line X1="5" Y1="9" X2="10" Y2="9" Stroke="#64748B" StrokeThickness="1.2"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                </Canvas>
+                            </Viewbox>
+                            <TextBlock x:Name="NavRulesTitle"
+                                       Text="Quy định"
+                                       FontFamily="{StaticResource InterFont}"
+                                       FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
                     <Button x:Name="NavReports"
                             Style="{StaticResource NavLink}"
                             HorizontalAlignment="Stretch"

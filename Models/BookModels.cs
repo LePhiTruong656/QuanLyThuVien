@@ -13,6 +13,8 @@ namespace LibraryManagementFE.Models
         public string Author { get; set; } = string.Empty;
         public string CategoryLine1 { get; set; } = string.Empty;
         public string CategoryLine2 { get; set; } = string.Empty;
+        public string CoverImagePath { get; set; } = string.Empty;
+        public DateTime AddedDate { get; set; } = DateTime.Now;
 
         /// <summary>Pill background (#EFF6FF CNTT, #FAF5FF tím…)</summary>
         public string CategoryPillBg { get; set; } = "#EFF6FF";
@@ -32,5 +34,7 @@ namespace LibraryManagementFE.Models
 
         /// <summary>Cover placeholder initials (short)</summary>
         public string CoverInitials => Title.Length > 0 ? Title[..Math.Min(Title.Length, 2)].ToUpperInvariant() : "?";
+
+        public bool HasCoverImage => !string.IsNullOrWhiteSpace(CoverImagePath);
     }
 }

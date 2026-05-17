@@ -1,0 +1,86 @@
+<UserControl x:Class="LibraryManagementFE.Views.RulesConfigView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <Grid Margin="32">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel MaxWidth="760">
+                <Border BorderBrush="{StaticResource BorderBrush}"
+                        Background="{StaticResource WhiteBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Tuổi tối thiểu" VerticalAlignment="Center" Margin="0,8"/>
+                        <TextBox x:Name="MinAgeTextBox" Grid.Row="0" Grid.Column="1" Margin="0,8,0,8"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Số sách mượn tối đa" VerticalAlignment="Center" Margin="0,8"/>
+                        <TextBox x:Name="MaxBooksTextBox" Grid.Row="1" Grid.Column="1" Margin="0,8,0,8"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Số ngày mượn tối đa" VerticalAlignment="Center" Margin="0,8"/>
+                        <TextBox x:Name="MaxLoanDaysTextBox" Grid.Row="2" Grid.Column="1" Margin="0,8,0,8"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Số lần gia hạn tối đa" VerticalAlignment="Center" Margin="0,8"/>
+                        <TextBox x:Name="MaxRenewalsTextBox" Grid.Row="3" Grid.Column="1" Margin="0,8,0,8"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Phạt mỗi ngày (tiền)" VerticalAlignment="Center" Margin="0,8"/>
+                        <TextBox x:Name="PenaltyPerDayTextBox" Grid.Row="4" Grid.Column="1" Margin="0,8,0,8"/>
+
+                        <CheckBox x:Name="NotBorrowWhenCardLockedCheckBox"
+                                  Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2"
+                                  Content="Không cho mượn khi thẻ đang bị khóa"
+                                  Margin="0,10,0,0"/>
+
+                        <CheckBox x:Name="AutoLockWhenLateReturnCheckBox"
+                                  Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
+                                  Content="Tự động khóa thẻ khi có phiếu mượn trả trễ"
+                                  Margin="0,8,0,0"/>
+
+                        <TextBlock x:Name="ConfigPathTextBlock"
+                                   Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2"
+                                   Margin="0,12,0,0"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="12"/>
+
+                        <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2"
+                                    Orientation="Horizontal" Margin="0,16,0,0">
+                            <Button x:Name="SaveButton"
+                                    Content="Lưu"
+                                    Width="110"
+                                    Click="SaveButton_Click"
+                                    Margin="0,0,12,0"/>
+                            <Button x:Name="ResetButton"
+                                    Content="Khôi phục mặc định"
+                                    Width="210"
+                                    Click="ResetButton_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <TextBlock x:Name="ErrorTextBlock"
+                           Margin="0,12,0,0"
+                           Foreground="#DC2626"
+                           Visibility="Collapsed"/>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
+

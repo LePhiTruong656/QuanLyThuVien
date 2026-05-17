@@ -1,0 +1,9 @@
+{
+  "MinAge": 16,
+  "MaxBooksPerReader": 5,
+  "MaxLoanDays": 14,
+  "MaxRenewals": 2,
+  "NotBorrowWhenCardLocked": true,
+  "PenaltyPerDay": 1000,
+  "AutoLockWhenLateReturn": true
+}

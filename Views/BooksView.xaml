@@ -116,7 +116,8 @@
                 </Border.Effect>
 
                 <StackPanel>
-                    <DataGrid ItemsSource="{Binding Books}"
+                    <DataGrid ItemsSource="{Binding PagedBooks}"
+                              Height="556"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               CanUserResizeColumns="True"
@@ -153,13 +154,40 @@
                                             <Border Width="40" Height="56" CornerRadius="4"
                                                     Background="#F1F5F9"
                                                     BorderBrush="{StaticResource BorderBrush}"
-                                                    BorderThickness="1" Margin="0,0,12,0">
-                                                <TextBlock Text="{Binding CoverInitials}"
-                                                           FontFamily="{StaticResource InterFont}"
-                                                           FontSize="10" FontWeight="SemiBold"
-                                                           Foreground="{StaticResource TextMutedBrush}"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"/>
+                                                    BorderThickness="1" Margin="0,0,12,0"
+                                                    ClipToBounds="True">
+                                                <Grid>
+                                                    <Image Source="{Binding CoverImagePath}"
+                                                           Stretch="UniformToFill">
+                                                        <Image.Style>
+                                                            <Style TargetType="Image">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding HasCoverImage}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Image.Style>
+                                                    </Image>
+                                                    <TextBlock Text="{Binding CoverInitials}"
+                                                               FontFamily="{StaticResource InterFont}"
+                                                               FontSize="10" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding HasCoverImage}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Grid>
                                             </Border>
                                             <TextBlock Text="{Binding Title}"
                                                        FontFamily="{StaticResource InterFont}"
@@ -327,12 +355,34 @@
                                         </Canvas>
                                     </Viewbox>
                                 </Button>
-                                <Button Content="1" Style="{StaticResource Books.PageNumberButton.Active}" Margin="0,0,4,0"/>
-                                <Button Content="2" Style="{StaticResource Books.PageNumberButton}" Margin="0,0,4,0"/>
-                                <Button Content="3" Style="{StaticResource Books.PageNumberButton}" Margin="0,0,4,0"/>
-                                <TextBlock Text="…" FontSize="16" Foreground="#94A3B8"
-                                           VerticalAlignment="Center" Margin="4,0,8,0"/>
-                                <Button Content="12" Style="{StaticResource Books.PageNumberButton}" Margin="0,0,4,0"/>
+                                <ItemsControl ItemsSource="{Binding PageNumbers}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Content="{Binding Number}"
+                                                    Command="{Binding DataContext.GoToPageCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding Number}"
+                                                    Margin="0,0,4,0">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource Books.PageNumberButton}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                                <Setter Property="Background" Value="#005AB4"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
+                                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                                 <Button Style="{StaticResource Books.PageNavButton}"
                                         Command="{Binding NextPageCommand}"
                                         ToolTip="Trang sau">

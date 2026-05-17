@@ -182,7 +182,8 @@
                 </Border.Effect>
                 <StackPanel>
                     <!-- DataGrid -->
-                    <DataGrid ItemsSource="{Binding Readers}"
+                    <DataGrid ItemsSource="{Binding PagedReaders}"
+                              Height="408"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               CanUserResizeColumns="False"
@@ -360,9 +361,34 @@
                                         Command="{Binding PrevPageCommand}"
                                         Style="{StaticResource PageBtn}"
                                         Margin="0,0,4,0"/>
-                                <Button Content="1" Style="{StaticResource PageBtn.Active}" Margin="0,0,4,0"/>
-                                <Button Content="2" Style="{StaticResource PageBtn}" Margin="0,0,4,0"/>
-                                <Button Content="3" Style="{StaticResource PageBtn}" Margin="0,0,4,0"/>
+                                <ItemsControl ItemsSource="{Binding PageNumbers}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Content="{Binding Number}"
+                                                    Command="{Binding DataContext.GoToPageCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding Number}"
+                                                    Margin="0,0,4,0">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource Books.PageNumberButton}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                                <Setter Property="Background" Value="#005AB4"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
+                                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                                 <Button Content="Sau"
                                         Command="{Binding NextPageCommand}"
                                         Style="{StaticResource PageBtn}"/>
