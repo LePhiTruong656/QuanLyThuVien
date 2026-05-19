@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using LibraryManagementFE.Models;
+using LibraryManagementFE.Services;
 using LibraryManagementFE.Views;
 
 namespace LibraryManagementFE.ViewModels
@@ -13,45 +14,8 @@ namespace LibraryManagementFE.ViewModels
     {
         private const int PageSize = 5;
 
-        public ObservableCollection<BookRecord> Books { get; } = new()
-        {
-            new BookRecord
-            {
-                Stt = 1,
-                Title = "Clean Code",
-                Author = "Robert C. Martin",
-                CategoryLine1 = "CNTT",
-                CategoryLine2 = "TECH",
-                CategoryPillBg = "#EFF6FF",
-                CategoryPillFg = "#1978E5",
-                Year = 2008,
-                Availability = BookAvailability.SanCo,
-            },
-            new BookRecord
-            {
-                Stt = 2,
-                Title = "Introduction to Algorithms",
-                Author = "Thomas H. Cormen",
-                CategoryLine1 = "CNTT",
-                CategoryLine2 = "TECH",
-                CategoryPillBg = "#EFF6FF",
-                CategoryPillFg = "#1978E5",
-                Year = 2009,
-                Availability = BookAvailability.DangMuon,
-            },
-            new BookRecord
-            {
-                Stt = 3,
-                Title = "Mat Biec",
-                Author = "Nguyen Nhat Anh",
-                CategoryLine1 = "Van",
-                CategoryLine2 = "hoc",
-                CategoryPillBg = "#FAF5FF",
-                CategoryPillFg = "#9333EA",
-                Year = 1990,
-                Availability = BookAvailability.SanCo,
-            },
-        };
+        public ObservableCollection<BookRecord> Books { get; } = new();
+        private readonly LibraryDataStore _store;
 
         public ObservableCollection<BookRecord> PagedBooks { get; } = new();
         public ObservableCollection<PageNumberItem> PageNumbers { get; } = new();
@@ -168,6 +132,12 @@ namespace LibraryManagementFE.ViewModels
 
         public BooksViewModel()
         {
+            _store = LibraryDataStoreFile.LoadOrCreate();
+            // populate from shared data store so menus and borrow/return use same book data
+            Books.Clear();
+            foreach (var b in _store.Books)
+                Books.Add(b);
+
             FilterCommand = new RelayCommand(OpenFilterDialog);
 
             AddBookCommand = new RelayCommand(OpenAddBookDialog);
@@ -225,7 +195,12 @@ namespace LibraryManagementFE.ViewModels
                 foreach (var book in dialog.Books)
                 {
                     book.Stt = Books.Count + 1;
+                    // ensure book has an Id for persistence and lookup
+                    if (string.IsNullOrWhiteSpace(book.Id))
+                        book.Id = System.Guid.NewGuid().ToString("N");
                     Books.Add(book);
+                    _store.Books.Add(book);
+                    LibraryDataStoreFile.Save(_store);
                 }
 
                 RefreshStats();
@@ -271,6 +246,14 @@ namespace LibraryManagementFE.ViewModels
 
                 editedBook.Stt = book.Stt;
                 Books[index] = editedBook;
+                // update shared store
+                var storeIndex = _store.Books.FindIndex(b => b.Id == book.Id);
+                if (storeIndex >= 0)
+                {
+                    editedBook.Id = _store.Books[storeIndex].Id;
+                    _store.Books[storeIndex] = editedBook;
+                    LibraryDataStoreFile.Save(_store);
+                }
                 RefreshStats();
                 RefreshPagedBooks();
             }
@@ -287,6 +270,13 @@ namespace LibraryManagementFE.ViewModels
             {
                 var index = Books.IndexOf(book);
                 Books.Remove(book);
+                // remove from shared store
+                var storeIndex = _store.Books.FindIndex(b => b.Id == book.Id);
+                if (storeIndex >= 0)
+                {
+                    _store.Books.RemoveAt(storeIndex);
+                    LibraryDataStoreFile.Save(_store);
+                }
                 ReorderBooks(index);
                 RefreshStats();
                 GoToPage(Math.Min(CurrentPage, TotalPages));

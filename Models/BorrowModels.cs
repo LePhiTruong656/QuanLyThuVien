@@ -8,18 +8,30 @@ namespace LibraryManagementFE.Models
     {
         DangMuon,   // Đang mượn
         DaTraTot,   // Đã trả - tốt
+        DaTraTre,   // Đã trả trễ
         QuaHan,     // Quá hạn
         ChuaTraBao, // Sắp đến hạn
     }
 
     public class BorrowRecord : INotifyPropertyChanged
     {
+        public string Id { get; set; } = string.Empty;
         public int Stt { get; set; }
         public string MaPhieu { get; set; } = "";
+        public string ReaderId { get; set; } = "";
+        public string BookId { get; set; } = "";
         public string ReaderName { get; set; } = "";
         public string ReaderInitials { get; set; } = "";
         public string ReaderEmail { get; set; } = "";
+        public string CardNumber { get; set; } = "";
         public string BookTitle { get; set; } = "";
+        public string Author { get; set; } = "";
+        public int LoanDays { get; set; }
+        public int RenewalCount { get; set; }
+        public string ReturnNote { get; set; } = "";
+        public decimal FineAmount { get; set; }
+        public bool FinePaid { get; set; }
+        public string FinePaidDate { get; set; } = "";
         public string BorrowDate { get; set; } = "";
         public string DueDate { get; set; } = "";
         public string ReturnDate { get; set; } = "";
@@ -34,6 +46,7 @@ namespace LibraryManagementFE.Models
         {
             BorrowStatus.DangMuon => "Đang mượn",
             BorrowStatus.DaTraTot => "Đã trả",
+            BorrowStatus.DaTraTre => "Đã trả trễ",
             BorrowStatus.QuaHan => "Quá hạn",
             BorrowStatus.ChuaTraBao => "Sắp hạn",
             _ => ""
@@ -43,6 +56,7 @@ namespace LibraryManagementFE.Models
         {
             BorrowStatus.DangMuon => "#EFF6FF",
             BorrowStatus.DaTraTot => "#DCFCE7",
+            BorrowStatus.DaTraTre => "#FDE68A",
             BorrowStatus.QuaHan => "#FEE2E2",
             BorrowStatus.ChuaTraBao => "#FFF7ED",
             _ => "#F1F5F9"
@@ -52,6 +66,7 @@ namespace LibraryManagementFE.Models
         {
             BorrowStatus.DangMuon => "#1978E5",
             BorrowStatus.DaTraTot => "#16A34A",
+            BorrowStatus.DaTraTre => "#92400E",
             BorrowStatus.QuaHan => "#DC2626",
             BorrowStatus.ChuaTraBao => "#EA580C",
             _ => "#64748B"
@@ -61,10 +76,15 @@ namespace LibraryManagementFE.Models
         {
             BorrowStatus.DangMuon => "#1978E5",
             BorrowStatus.DaTraTot => "#16A34A",
+            BorrowStatus.DaTraTre => "#92400E",
             BorrowStatus.QuaHan => "#DC2626",
             BorrowStatus.ChuaTraBao => "#EA580C",
             _ => "#94A3B8"
         };
+
+        public bool HasFine => FineAmount > 0;
+        public bool CanCollectFine => FineAmount > 0 && !FinePaid && Status == BorrowStatus.DaTraTre;
+        public string FineAmountDisplay => FineAmount > 0 ? string.Format(System.Globalization.CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} đ", FineAmount) : string.Empty;
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? n = null)
@@ -85,6 +105,20 @@ namespace LibraryManagementFE.Models
     {
         public string Month { get; set; } = "";
         public int Count { get; set; }
+        public double RelativeHeight { get; set; }
+    }
+
+    public class PaymentRecord
+    {
+        public string Id { get; set; } = string.Empty;
+        public string BorrowId { get; set; } = string.Empty;
+        public string BorrowMaPhieu { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public string PaidDate { get; set; } = string.Empty;
+        public string Note { get; set; } = string.Empty;
+        public string ReceiptNumber { get; set; } = string.Empty;
+
+        public string AmountDisplay => string.Format(System.Globalization.CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} đ", Amount);
     }
 
     public class CategoryStat

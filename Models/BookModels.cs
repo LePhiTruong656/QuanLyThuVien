@@ -8,6 +8,7 @@ namespace LibraryManagementFE.Models
 
     public class BookRecord
     {
+        public string Id { get; set; } = string.Empty;
         public int Stt { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Author { get; set; } = string.Empty;

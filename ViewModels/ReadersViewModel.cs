@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using LibraryManagementFE.Models;
+using LibraryManagementFE.Services;
 using LibraryManagementFE.Views;
 
 namespace LibraryManagementFE.ViewModels
@@ -12,15 +13,8 @@ namespace LibraryManagementFE.ViewModels
     {
         private const int PageSize = 5;
 
-        public ObservableCollection<ReaderRecord> Readers { get; } = new()
-        {
-            new ReaderRecord { Name="Le Hoang Nam",      Email="namlh@gmail.com",       CardNumber="TV-2024-001", RegDate="12/03/2024", CardType=CardType.SinhVien, Status=ReaderStatus.HoatDong },
-            new ReaderRecord { Name="Mai Thi Thu",       Email="thunmt@email.com",      CardNumber="TV-2024-002", RegDate="15/03/2024", CardType=CardType.GiaoVien, Status=ReaderStatus.HoatDong },
-            new ReaderRecord { Name="Tran Van Khoa",     Email="khoa.tran@student.edu", CardNumber="TV-2024-003", RegDate="18/03/2024", CardType=CardType.SinhVien, Status=ReaderStatus.HetHan },
-            new ReaderRecord { Name="Kieu Nha Phuong",   Email="phuong.kn@gmail.com",   CardNumber="TV-2024-004", RegDate="20/03/2024", CardType=CardType.SinhVien, Status=ReaderStatus.HoatDong },
-            new ReaderRecord { Name="Nguyen The Anh",    Email="anht@uni.edu.vn",       CardNumber="TV-2024-005", RegDate="22/03/2024", CardType=CardType.GiaoVien, Status=ReaderStatus.HoatDong },
-            new ReaderRecord { Name="Pham Thuy Linh",    Email="linh.pt@example.com",   CardNumber="TV-2024-006", RegDate="25/03/2024", CardType=CardType.SinhVien, Status=ReaderStatus.HetHan },
-        };
+        public ObservableCollection<ReaderRecord> Readers { get; } = new();
+        private readonly LibraryDataStore _store;
 
         public ObservableCollection<ReaderRecord> PagedReaders { get; } = new();
         public ObservableCollection<PageNumberItem> PageNumbers { get; } = new();
@@ -136,6 +130,12 @@ namespace LibraryManagementFE.ViewModels
 
         public ReadersViewModel()
         {
+            _store = LibraryDataStoreFile.LoadOrCreate();
+            // populate from shared data store so menus and borrow/return use same data
+            Readers.Clear();
+            foreach (var r in _store.Readers)
+                Readers.Add(r);
+
             AddReaderCommand = new RelayCommand(OpenAddReaderDialog);
 
             FilterCommand = new RelayCommand(OpenFilterDialog);
@@ -175,7 +175,12 @@ namespace LibraryManagementFE.ViewModels
             if (dialog.ShowDialog() == true && dialog.Reader is not null)
             {
                 dialog.Reader.CardNumber = GenerateCardNumber();
+                // add to observable collection and persist to shared store
+                if (string.IsNullOrWhiteSpace(dialog.Reader.Id))
+                    dialog.Reader.Id = System.Guid.NewGuid().ToString("N");
                 Readers.Add(dialog.Reader);
+                _store.Readers.Add(dialog.Reader);
+                LibraryDataStoreFile.Save(_store);
                 RefreshStats();
                 GoToPage(TotalPages);
             }

@@ -26,6 +26,21 @@ namespace LibraryManagementFE.Converters
             => throw new NotSupportedException();
     }
 
+    [ValueConversion(typeof(object), typeof(System.Windows.Visibility))]
+    public class NullToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            var invert = parameter is string s && s == "Invert";
+            var isVisible = value != null;
+            if (invert) isVisible = !isVisible;
+            return isVisible ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
     /// <summary>
     /// Converts a relative height ratio (0–1) to a pixel height.
     /// ConverterParameter = max pixel height (default 220).
