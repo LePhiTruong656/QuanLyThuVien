@@ -1,0 +1,150 @@
+<UserControl x:Class="LibraryManagementFE.Views.Register.RegisterStep2View"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Segmented radio-button style for card type selection -->
+        <Style x:Key="CardTypeRadio" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="#B3FFFFFF"/>
+            <Setter Property="FontFamily" Value="{StaticResource InterFont}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="bd"
+                                Background="Transparent"
+                                BorderBrush="#40FFFFFF" BorderThickness="1"
+                                CornerRadius="8" Height="44">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#33FFFFFF"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#AAFFFFFF"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1AFFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel>
+
+        <!-- Full name -->
+        <TextBlock Text="Họ và tên"
+                   FontFamily="{StaticResource InterFont}"
+                   FontSize="13" FontWeight="SemiBold"
+                   Foreground="#FFFFFF" Margin="0,0,0,8"/>
+        <Grid Margin="0,0,0,4">
+            <TextBox Style="{StaticResource GlassTextBox}"
+                     Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"
+                     Height="48" VerticalContentAlignment="Center"
+                     Padding="14,12,12,12"/>
+            <TextBlock Text="Nguyễn Văn A"
+                       IsHitTestVisible="False"
+                       Visibility="{Binding ShowFullNamePlaceholder, Converter={StaticResource BoolToVis}}"
+                       Foreground="#66FFFFFF" FontSize="14"
+                       FontFamily="{StaticResource InterFont}"
+                       Margin="14,0,0,0" VerticalAlignment="Center"/>
+        </Grid>
+        <TextBlock Text="{Binding FullNameError}"
+                   Visibility="{Binding HasFullNameError, Converter={StaticResource BoolToVis}}"
+                   FontFamily="{StaticResource InterFont}"
+                   FontSize="12" Foreground="#FFADC8" Margin="2,0,0,0"/>
+
+        <!-- Card type -->
+        <TextBlock Text="Loại thẻ"
+                   FontFamily="{StaticResource InterFont}"
+                   FontSize="13" FontWeight="SemiBold"
+                   Foreground="#FFFFFF" Margin="0,12,0,8"/>
+        <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <RadioButton Grid.Column="0" Content="Sinh viên"
+                         IsChecked="{Binding IsStudent, Mode=TwoWay}"
+                         Style="{StaticResource CardTypeRadio}"/>
+            <RadioButton Grid.Column="2" Content="Giảng viên"
+                         IsChecked="{Binding IsLecturer, Mode=TwoWay}"
+                         Style="{StaticResource CardTypeRadio}"/>
+        </Grid>
+
+        <!-- Student / Lecturer ID (label changes with card type) -->
+        <TextBlock Text="{Binding StudentIdLabel}"
+                   FontFamily="{StaticResource InterFont}"
+                   FontSize="13" FontWeight="SemiBold"
+                   Foreground="#FFFFFF" Margin="0,0,0,8"/>
+        <Grid Margin="0,0,0,4">
+            <TextBox Style="{StaticResource GlassTextBox}"
+                     Text="{Binding StudentId, UpdateSourceTrigger=PropertyChanged}"
+                     Height="48" VerticalContentAlignment="Center"
+                     Padding="14,12,12,12"/>
+            <TextBlock Text="{Binding StudentIdPlaceholder}"
+                       IsHitTestVisible="False"
+                       Visibility="{Binding ShowStudentIdPlaceholder, Converter={StaticResource BoolToVis}}"
+                       Foreground="#66FFFFFF" FontSize="14"
+                       FontFamily="{StaticResource InterFont}"
+                       Margin="14,0,0,0" VerticalAlignment="Center"/>
+        </Grid>
+        <TextBlock Text="{Binding StudentIdError}"
+                   Visibility="{Binding HasStudentIdError, Converter={StaticResource BoolToVis}}"
+                   FontFamily="{StaticResource InterFont}"
+                   FontSize="12" Foreground="#FFADC8" Margin="2,0,0,0"/>
+
+        <!-- Date of birth -->
+        <TextBlock Text="Ngày sinh"
+                   FontFamily="{StaticResource InterFont}"
+                   FontSize="13" FontWeight="SemiBold"
+                   Foreground="#FFFFFF" Margin="0,12,0,8"/>
+        <Grid Margin="0,0,0,4">
+            <TextBox Style="{StaticResource GlassTextBox}"
+                     Text="{Binding DateOfBirth, UpdateSourceTrigger=PropertyChanged}"
+                     Height="48" VerticalContentAlignment="Center"
+                     Padding="14,12,12,12"/>
+            <TextBlock Text="DD/MM/YYYY"
+                       IsHitTestVisible="False"
+                       Visibility="{Binding ShowDateOfBirthPlaceholder, Converter={StaticResource BoolToVis}}"
+                       Foreground="#66FFFFFF" FontSize="14"
+                       FontFamily="{StaticResource InterFont}"
+                       Margin="14,0,0,0" VerticalAlignment="Center"/>
+        </Grid>
+        <TextBlock Text="{Binding DateOfBirthError}"
+                   Visibility="{Binding HasDateOfBirthError, Converter={StaticResource BoolToVis}}"
+                   FontFamily="{StaticResource InterFont}"
+                   FontSize="12" Foreground="#FFADC8" Margin="2,0,0,0"/>
+
+        <!-- Phone (optional) -->
+        <TextBlock FontFamily="{StaticResource InterFont}"
+                   FontSize="13" FontWeight="SemiBold"
+                   Foreground="#FFFFFF" Margin="0,12,0,8">
+            <Run Text="Số điện thoại"/>
+            <Run Text="  (tuỳ chọn)" Foreground="#66FFFFFF" FontWeight="Normal" FontSize="12"/>
+        </TextBlock>
+        <Grid Margin="0,0,0,0">
+            <TextBox Style="{StaticResource GlassTextBox}"
+                     Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
+                     Height="48" VerticalContentAlignment="Center"
+                     Padding="14,12,12,12"/>
+            <TextBlock Text="0901 234 567"
+                       IsHitTestVisible="False"
+                       Visibility="{Binding ShowPhonePlaceholder, Converter={StaticResource BoolToVis}}"
+                       Foreground="#66FFFFFF" FontSize="14"
+                       FontFamily="{StaticResource InterFont}"
+                       Margin="14,0,0,0" VerticalAlignment="Center"/>
+        </Grid>
+
+    </StackPanel>
+</UserControl>
