@@ -3,6 +3,7 @@ namespace LibraryManagementFE.Policies
     public sealed class LibraryPolicy
     {
         public int MinAge { get; set; }
+        public int MaxAge { get; set; }
         public int MaxBooksPerReader { get; set; }
         public int MaxLoanDays { get; set; }
         public int MaxRenewals { get; set; }
@@ -13,6 +14,7 @@ namespace LibraryManagementFE.Policies
         public static LibraryPolicy Default() => new LibraryPolicy
         {
             MinAge = 16,
+            MaxAge = 55,
             MaxBooksPerReader = 5,
             MaxLoanDays = 14,
             MaxRenewals = 2,

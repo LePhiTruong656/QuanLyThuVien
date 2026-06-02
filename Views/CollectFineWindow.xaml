@@ -1,0 +1,98 @@
+﻿<Window x:Class="LibraryManagementFE.Views.CollectFineWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Thu tiền phạt" Height="520" Width="680"
+        Background="{StaticResource BgBrush}"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Thu tiền phạt" FontFamily="{StaticResource InterFont}" FontSize="24" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+            <TextBlock Text="Chọn độc giả và xử lý thu tiền phạt" FontFamily="{StaticResource InterFont}" FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,12">
+            <ComboBox x:Name="ReaderComboBox"
+                      Width="360"
+                      IsEditable="True"
+                      ItemsSource="{Binding ReaderView}"
+                      DisplayMemberPath="Name"
+                      SelectedValuePath="Id"
+                      SelectedValue="{Binding SelectedReaderId, Mode=TwoWay}"
+                      IsTextSearchEnabled="True"
+                      StaysOpenOnEdit="True"
+                      KeyUp="ReaderComboBox_KeyUp"/>
+            <Button Content="Tìm" Width="100" Margin="12,0,0,0" Click="SearchButton_Click"/>
+        </StackPanel>
+
+        <TextBlock x:Name="ErrorMessageTextBlock"
+                   Grid.Row="2"
+                   FontFamily="{StaticResource InterFont}"
+                   FontSize="13"
+                   Foreground="{StaticResource DangerBrush}"
+                   Visibility="Collapsed"
+                   TextWrapping="Wrap"
+                   Margin="0,0,0,12"/>
+
+        <Border x:Name="FineDetailsPanel"
+                Grid.Row="3"
+                Padding="16"
+                Background="{StaticResource WhiteBrush}"
+                CornerRadius="12"
+                Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock Text="Chi tiết khoản phạt" FontFamily="{StaticResource InterFont}" FontSize="16" FontWeight="Bold" Margin="0,0,0,12"/>
+                <DataGrid ItemsSource="{Binding FineDetails}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          HeadersVisibility="Column"
+                          Height="220">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Mã phiếu" Binding="{Binding MaPhieu}" Width="*"/>
+                        <DataGridTextColumn Header="Tên sách" Binding="{Binding BookTitle}" Width="2*"/>
+                        <DataGridTextColumn Header="Tiền phạt" Binding="{Binding FineAmount, StringFormat=N0}" Width="Auto"/>
+                        <DataGridTextColumn Header="Đã thu" Binding="{Binding PaidAmount, StringFormat=N0}" Width="Auto"/>
+                        <DataGridTextColumn Header="Còn lại" Binding="{Binding RemainingAmount, StringFormat=N0}" Width="Auto"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </StackPanel>
+        </Border>
+
+        <StackPanel x:Name="PaymentPanel"
+                    Grid.Row="4"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Stretch"
+                    Margin="0,16,0,0"
+                    Visibility="Collapsed">
+            <StackPanel Width="360">
+                <TextBlock Text="Số tiền thu" FontFamily="{StaticResource InterFont}" FontSize="14" FontWeight="SemiBold"/>
+                <TextBox Text="{Binding PaymentAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         PreviewTextInput="PaymentAmountTextBox_PreviewTextInput"
+                         FontFamily="{StaticResource InterFont}"
+                         FontSize="14"
+                         Height="36"
+                         Margin="0,6,0,0"/>
+                <TextBlock Text="{Binding RemainingAmount, StringFormat=Số tiền còn lại: {0:N0} đ}"
+                           FontFamily="{StaticResource InterFont}"
+                           FontSize="13"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           Margin="0,8,0,0"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="24,0,0,0">
+                <Button Content="Xác nhận" Width="120" Margin="0,0,12,0" Click="ConfirmButton_Click"/>
+                <Button Content="Hủy" Width="100" Click="CancelButton_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

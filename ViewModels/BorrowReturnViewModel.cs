@@ -24,6 +24,7 @@ namespace LibraryManagementFE.ViewModels
         private bool _showUnpaidOnly;
         private bool _showLateReturnOnly;
         private bool _showFilterPanel;
+        private bool _isReturning;
         private int _currentPage = 1;
         private int _pageSize = 12;
         private int _totalPages = 1;
@@ -41,6 +42,7 @@ namespace LibraryManagementFE.ViewModels
         public ICommand ReturnCommand { get; }
         public ICommand ReturnSelectedCommand { get; }
         public ICommand CollectFineCommand { get; }
+        public ICommand OpenCollectFineCommand { get; }
         public ICommand RenewLoanCommand { get; }
         public ICommand ToggleFilterPanelCommand { get; }
         public ICommand PreviousPageCommand { get; }
@@ -181,7 +183,7 @@ namespace LibraryManagementFE.ViewModels
         public decimal TotalFineCollected => _service.TotalFinesCollected(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1), DateTime.Now);
         public string TotalFineCollectedDisplay => string.Format(System.Globalization.CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} đ", TotalFineCollected);
         public string FinePeriodLabel => $"Phạt thu tháng {DateTime.Now:MM/yyyy}";
-        public decimal TotalOutstandingFine => Borrows.Where(b => b.FineAmount > 0 && !b.FinePaid).Sum(b => b.FineAmount);
+        public decimal TotalOutstandingFine => Borrows.Where(b => b.FineAmount > 0).Sum(b => b.FineAmount - b.PaidFineAmount);
         public string TotalOutstandingFineDisplay => string.Format(System.Globalization.CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} đ", TotalOutstandingFine);
         public string PolicySummary => $"Quy định: {_policy.MaxBooksPerReader} sách/người • {_policy.MaxLoanDays} ngày • {_policy.MaxRenewals} lần gia hạn • {_policy.PenaltyPerDay:N0} đ/ngày";
         public string PolicyStatus => _policy.NotBorrowWhenCardLocked ? "Thẻ phải hoạt động để mượn" : "Không giới hạn trạng thái thẻ";
@@ -194,8 +196,12 @@ namespace LibraryManagementFE.ViewModels
 
             LendCommand = new RelayCommand(_ => ExecuteLendCommand());
             ReturnCommand = new RelayCommand(p => ExecuteReturnByPhieu(p as string));
-            ReturnSelectedCommand = new RelayCommand(_ => ExecuteReturnSelected());
+            ReturnSelectedCommand = new RelayCommand(
+                _ => ExecuteReturnSelected(),
+                _ => SelectedBorrow != null && string.IsNullOrEmpty(SelectedBorrow.ReturnDate) && !_isReturning
+            );
             CollectFineCommand = new RelayCommand(p => ExecuteCollectFine(p as string));
+            OpenCollectFineCommand = new RelayCommand(_ => ExecuteOpenCollectFineWindow());
             RenewLoanCommand = new RelayCommand(_ => ExecuteRenewLoan());
             ToggleFilterPanelCommand = new RelayCommand(_ => ShowFilterPanel = !ShowFilterPanel);
             PreviousPageCommand = new RelayCommand(_ => CurrentPage = Math.Max(1, CurrentPage - 1), _ => CurrentPage > 1);
@@ -226,7 +232,7 @@ namespace LibraryManagementFE.ViewModels
         {
             // Refresh dữ liệu từ service trước khi mở dialog
             LoadMasterData();
-            
+
             var window = new LendBorrowWindow
             {
                 Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive),
@@ -258,16 +264,28 @@ namespace LibraryManagementFE.ViewModels
             }
         }
 
+
+
         private void ExecuteReturnSelected()
         {
-            if (SelectedBorrow == null)
+            if (_isReturning) return;
+            if (SelectedBorrow == null) return;
+            if (!string.IsNullOrEmpty(SelectedBorrow.ReturnDate))
             {
-                MessageBox.Show("Vui lòng chọn một phiếu mượn để trả sách.", "Xác nhận trả sách", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Sách đã được trả trước đó.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            ExecuteReturnByPhieu(SelectedBorrow.MaPhieu);
-            LoadMasterData();
+            _isReturning = true;
+            try
+            {
+                ExecuteReturnByPhieu(SelectedBorrow.MaPhieu);
+                LoadMasterData();
+            }
+            finally
+            {
+                _isReturning = false;
+            }
         }
 
         private void ExecuteReturnByPhieu(string? maPhieu)
@@ -385,7 +403,8 @@ namespace LibraryManagementFE.ViewModels
                 var keyword = SearchText.Trim();
                 query = query.Where(b => b.MaPhieu.Contains(keyword, StringComparison.OrdinalIgnoreCase)
                                        || b.ReaderName.Contains(keyword, StringComparison.OrdinalIgnoreCase)
-                                       || b.BookTitle.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+                                       || b.BookTitle.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                                       || b.CardNumber.Contains(keyword, StringComparison.OrdinalIgnoreCase));
             }
 
             if (StatusFilter != "Tất cả")
@@ -403,7 +422,7 @@ namespace LibraryManagementFE.ViewModels
                 query = query.Where(b => b.Status == BorrowStatus.QuaHan);
 
             if (ShowUnpaidOnly)
-                query = query.Where(b => b.FineAmount > 0 && !b.FinePaid);
+                query = query.Where(b => b.FineAmount > 0 && (b.FineAmount - b.PaidFineAmount) > 0);
 
             if (ShowLateReturnOnly)
                 query = query.Where(b => b.Status == BorrowStatus.DaTraTre);
@@ -444,6 +463,43 @@ namespace LibraryManagementFE.ViewModels
         private void ReturnBookByPhieu(string maPhieu)
         {
             ExecuteReturnByPhieu(maPhieu);
+        }
+
+        // Thay toàn bộ method này trong BorrowReturnViewModel.cs
+
+        private void ExecuteOpenCollectFineWindow()
+        {
+            try
+            {
+                // Refresh dữ liệu trước khi mở cửa sổ
+                LoadMasterData();
+
+                // KHÔNG truyền Readers vào object initializer vì CollectFineWindow
+                // không có setter public phù hợp hoặc dễ gây lỗi binding.
+                var window = new CollectFineWindow();
+
+                // Set Owner nếu có window đang active
+                var owner = Application.Current.Windows
+                    .OfType<Window>()
+                    .FirstOrDefault(w => w.IsActive);
+
+                if (owner != null)
+                {
+                    window.Owner = owner;
+                }
+
+                window.Closed += (s, e) => RefreshAfterUpdate();
+
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.ToString(),
+                    "Lỗi mở cửa sổ Thu phạt",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         private void UpdateOverdueStatuses()

@@ -30,12 +30,15 @@ namespace LibraryManagementFE.Models
         public int RenewalCount { get; set; }
         public string ReturnNote { get; set; } = "";
         public decimal FineAmount { get; set; }
-        public bool FinePaid { get; set; }
         public string FinePaidDate { get; set; } = "";
         public string BorrowDate { get; set; } = "";
         public string DueDate { get; set; } = "";
         public string ReturnDate { get; set; } = "";
         public BorrowStatus Status { get; set; }
+        public decimal PaidFineAmount { get; set; } = 0;
+        public string? CoverImagePath { get; set; }
+        public bool FinePaid => FineAmount - PaidFineAmount <= 0;
+        public decimal OutstandingFine => FineAmount - PaidFineAmount;
 
         // Avatar colors
         public string AvatarBg { get; set; } = "#EFF6FF";
@@ -138,5 +141,37 @@ namespace LibraryManagementFE.Models
         public string Category { get; set; } = "";
         public string CatBg { get; set; } = "#EFF6FF";
         public string CatFg { get; set; } = "#1978E5";
+    }
+
+    public class TopReaderRecord
+    {
+        public int Rank { get; set; }
+        public string Name { get; set; } = "";
+        public string CardNumber { get; set; } = "";
+        public int Borrows { get; set; }
+        public string Bg { get; set; } = "#EFF6FF";
+        public string Fg { get; set; } = "#1978E5";
+    }
+
+    public class LateReturnRecord
+    {
+        public int Stt { get; set; }
+        public string BookTitle { get; set; } = "";
+        public string BorrowDate { get; set; } = "";
+        public int DaysLate { get; set; }
+        public decimal FineAmount { get; set; }
+        public string ReaderName { get; set; } = "";
+        public string FineAmountDisplay => string.Format(System.Globalization.CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} đ", FineAmount);
+    }
+
+    public class CategoryBorrowStat
+    {
+        public string Month { get; set; } = "";
+        public string Category { get; set; } = "";
+        public int BorrowCount { get; set; }
+        public double Percentage { get; set; }
+        public string PercentageDisplay => Percentage.ToString("P1");
+
+
     }
 }
