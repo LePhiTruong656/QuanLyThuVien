@@ -49,8 +49,15 @@ namespace LibraryManagementFE.Policies
             }
 
             var json = File.ReadAllText(p);
-            var policy = JsonSerializer.Deserialize<LibraryPolicy>(json, JsonOptions);
-            return policy ?? LibraryPolicy.Default();
+            var policy = JsonSerializer.Deserialize<LibraryPolicy>(json, JsonOptions) ?? LibraryPolicy.Default();
+            var defaultPolicy = LibraryPolicy.Default();
+            policy.MinAge = policy.MinAge > 0 ? policy.MinAge : defaultPolicy.MinAge;
+            policy.MaxAge = policy.MaxAge > 0 ? policy.MaxAge : defaultPolicy.MaxAge;
+            policy.MaxBooksPerReader = policy.MaxBooksPerReader > 0 ? policy.MaxBooksPerReader : defaultPolicy.MaxBooksPerReader;
+            policy.MaxLoanDays = policy.MaxLoanDays > 0 ? policy.MaxLoanDays : defaultPolicy.MaxLoanDays;
+            policy.MaxRenewals = policy.MaxRenewals > 0 ? policy.MaxRenewals : defaultPolicy.MaxRenewals;
+            policy.PenaltyPerDay = policy.PenaltyPerDay > 0 ? policy.PenaltyPerDay : defaultPolicy.PenaltyPerDay;
+            return policy;
         }
 
         public static LibraryPolicy LoadOrCreate(out string configPath)

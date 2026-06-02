@@ -1,4 +1,8 @@
+using System;
+using System.Globalization;
 using System.Windows;
+using LibraryManagementFE.Models;
+using LibraryManagementFE.Services;
 using LibraryManagementFE.ViewModels;
 using LibraryManagementFE.Views.Register;
 
@@ -7,6 +11,7 @@ namespace LibraryManagementFE.Views
     public partial class RegisterWindow : Window
     {
         private readonly RegisterViewModel _vm = new();
+        private readonly LibraryDataStore _store;
 
         private readonly RegisterStep1View _step1 = new();
         private readonly RegisterStep2View _step2 = new();
@@ -15,6 +20,7 @@ namespace LibraryManagementFE.Views
         public RegisterWindow()
         {
             InitializeComponent();
+            _store = LibraryDataStoreFile.LoadOrCreate();
             DataContext = _vm;
             StepContent.Content = _step1;
         }
@@ -60,6 +66,8 @@ namespace LibraryManagementFE.Views
 
         private void FinishRegistration()
         {
+            SaveNewReader();
+
             MessageBox.Show(
                 $"Đăng ký thành công!\nChào mừng {_vm.FullName} đến với thư viện UIT.",
                 "Thông báo",
@@ -69,6 +77,31 @@ namespace LibraryManagementFE.Views
             LoginWindow loginWindow = new LoginWindow();
             loginWindow.Show();
             Close();
+        }
+
+        private void SaveNewReader()
+        {
+            var birthDate = _vm.DateOfBirth;
+            if (!string.IsNullOrWhiteSpace(_vm.DateOfBirth) &&
+                DateTime.TryParseExact(_vm.DateOfBirth, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDob))
+            {
+                birthDate = parsedDob.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            }
+
+            var newReader = new ReaderRecord
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Name = _vm.FullName,
+                Email = _vm.Email,
+                CardNumber = _vm.StudentId,
+                DateOfBirth = birthDate,
+                RegDate = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                CardType = _vm.IsStudent ? CardType.SinhVien : CardType.GiaoVien,
+                Status = ReaderStatus.HoatDong
+            };
+
+            _store.Readers.Add(newReader);
+            LibraryDataStoreFile.Save(_store);
         }
 
         private void BtnLogin_Click(object sender, RoutedEventArgs e)

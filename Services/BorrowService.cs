@@ -27,6 +27,8 @@ namespace LibraryManagementFE.Services
         public IReadOnlyList<BorrowRecord> Borrows => _store.Borrows.AsReadOnly();
         public IReadOnlyList<PaymentRecord> Payments => _store.Payments.AsReadOnly();
 
+
+
         public IEnumerable<BookRecord> GetAvailableBooks()
             => _store.Books.Where(b => b.Availability == BookAvailability.SanCo);
 
@@ -45,20 +47,32 @@ namespace LibraryManagementFE.Services
             var existingReader = _store.Readers.FirstOrDefault(r => r.Id == reader.Id || (!string.IsNullOrWhiteSpace(r.CardNumber) && r.CardNumber == reader.CardNumber));
             if (existingReader != null)
             {
+                reader = existingReader;
+
                 if (_policy.NotBorrowWhenCardLocked && existingReader.Status != ReaderStatus.HoatDong)
                     throw new InvalidOperationException("Thẻ độc giả đang không hoạt động và không được phép mượn.");
+
+                if (!IsReaderAgeValid(existingReader))
+                    throw new InvalidOperationException($"Độc giả phải từ {_policy.MinAge} đến {_policy.MaxAge} tuổi mới được mượn sách.");
+
+                if (HasOverdueBorrows(existingReader))
+                    throw new InvalidOperationException("Độc giả hiện có sách quá hạn và không được mượn thêm.");
 
                 var borrowedCount = _store.Borrows.Count(b => b.ReaderId == existingReader.Id && (b.Status == BorrowStatus.DangMuon || b.Status == BorrowStatus.QuaHan));
                 if (borrowedCount >= _policy.MaxBooksPerReader)
                     throw new InvalidOperationException($"Độc giả đã mượn tối đa {_policy.MaxBooksPerReader} sách.");
-
-                reader = existingReader;
             }
 
             if (existingBook != null)
             {
                 book = existingBook;
             }
+
+            if (!IsReaderAgeValid(reader))
+                throw new InvalidOperationException($"Độc giả phải từ {_policy.MinAge} đến {_policy.MaxAge} tuổi mới được mượn sách.");
+
+            if (book.Availability != BookAvailability.SanCo)
+                throw new InvalidOperationException("Chỉ sách sẵn có mới được phép mượn.");
 
             var now = borrowDate ?? DateTime.Now;
             var loanDays = days ?? _policy.MaxLoanDays;
@@ -80,14 +94,15 @@ namespace LibraryManagementFE.Services
                 BookId = book.Id,
                 BookTitle = book.Title,
                 Author = book.Author,
+                CoverImagePath = book.CoverImagePath,
                 LoanDays = loanDays,
                 RenewalCount = 0,
                 BorrowDate = now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 DueDate = due.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 ReturnDate = string.Empty,
                 FineAmount = 0m,
-                FinePaid = false,
-                FinePaidDate = string.Empty,
+                //FinePaid = false,     // bỏ vì read-only
+                //FinePaidDate = string.Empty,
                 Status = BorrowStatus.DangMuon
             };
 
@@ -97,10 +112,36 @@ namespace LibraryManagementFE.Services
             return record;
         }
 
+        public bool HasOverdueBorrows(ReaderRecord reader)
+        {
+            if (reader == null) return false;
+            return _store.Borrows.Any(b => b.ReaderId == reader.Id && (b.Status == BorrowStatus.QuaHan || (b.Status == BorrowStatus.DangMuon && ParseDate(b.DueDate) < DateTime.Now.Date)));
+        }
+
+        public bool IsReaderAgeValid(ReaderRecord reader)
+        {
+            if (reader == null) return true;
+            if (string.IsNullOrWhiteSpace(reader.DateOfBirth)) return true;
+            if (!DateTime.TryParse(reader.DateOfBirth, out var dob)) return true;
+            var age = DateTime.Now.Year - dob.Year;
+            if (dob.Date > DateTime.Now.AddYears(-age)) age--;
+            return age >= _policy.MinAge && age <= _policy.MaxAge;
+        }
+
+        private static DateTime ParseDate(string date)
+            => DateTime.TryParse(date, out var result) ? result : DateTime.MaxValue;
+
+        private void Save()
+            => LibraryDataStoreFile.Save(_store);
+
         public (BorrowRecord? record, decimal fine) ReturnBook(string maPhieu, DateTime? returnDate = null)
         {
             var rec = _store.Borrows.FirstOrDefault(r => r.MaPhieu == maPhieu);
-            if (rec == null) return (null, 0m);
+            if (rec == null)
+                return (null, 0m);
+            if (!string.IsNullOrEmpty(rec.ReturnDate))
+                return (null, 0m);
+
 
             var returned = returnDate ?? DateTime.Now;
             rec.ReturnDate = returned.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -111,8 +152,9 @@ namespace LibraryManagementFE.Services
             var fine = daysLate > 0 ? daysLate * _policy.PenaltyPerDay : 0m;
 
             rec.FineAmount = fine;
-            rec.FinePaid = false;
-            rec.FinePaidDate = string.Empty;
+            rec.PaidFineAmount = 0;
+            // rec.FinePaid = false;      // bỏ
+            // rec.FinePaidDate = string.Empty;
             rec.Status = daysLate > 0 ? BorrowStatus.DaTraTre : BorrowStatus.DaTraTot;
 
             var book = _store.Books.FirstOrDefault(b => b.Id == rec.BookId);
@@ -143,12 +185,18 @@ namespace LibraryManagementFE.Services
         public decimal CollectFine(string maPhieu, decimal? amount = null, string note = "Thu phạt")
         {
             var rec = _store.Borrows.FirstOrDefault(r => r.MaPhieu == maPhieu);
-            if (rec == null || rec.FineAmount <= 0 || rec.FinePaid)
-                return 0m;
+            if (rec == null || rec.FineAmount <= 0) return 0m;
 
-            var paymentAmount = amount ?? rec.FineAmount;
-            rec.FinePaid = true;
-            rec.FinePaidDate = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            var remaining = rec.FineAmount - rec.PaidFineAmount;
+            if (remaining <= 0) return 0m;
+
+            var paymentAmount = amount ?? remaining;
+            if (paymentAmount > remaining) paymentAmount = remaining;
+
+            rec.PaidFineAmount += paymentAmount;
+
+            // Không cần set FinePaid hay FinePaidDate vì chúng là read-only,
+            // các nơi khác sẽ dùng (FineAmount - PaidFineAmount) để kiểm tra nợ.
 
             var payment = new PaymentRecord
             {
@@ -174,6 +222,11 @@ namespace LibraryManagementFE.Services
         public decimal TotalFinesCollected(DateTime from, DateTime to)
             => _store.Payments.Where(p => DateTime.TryParse(p.PaidDate, out var d) && d.Date >= from.Date && d.Date <= to.Date)
                               .Sum(p => p.Amount);
+
+        public decimal TotalOutstandingFine()
+            => _store.Borrows
+                     .Where(b => b.FineAmount > 0)
+                     .Sum(b => Math.Max(0m, b.FineAmount - b.PaidFineAmount));
 
         public IEnumerable<MonthlyBorrowPoint> MonthlyBorrowCounts(int monthsBack = 6)
         {
@@ -265,8 +318,7 @@ namespace LibraryManagementFE.Services
                 _store.Readers.Add(reader);
         }
 
-        private void Save()
-            => LibraryDataStoreFile.Save(_store);
+
 
         private static string GenerateMaPhieu(DateTime dt)
             => $"P{dt:yyyyMMddHHmmss}{Guid.NewGuid().ToString().Substring(0, 4).ToUpperInvariant()}";
