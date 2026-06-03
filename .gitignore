@@ -1,0 +1,29 @@
+## Build
+bin/
+obj/
+[Bb]uild/
+[Bb]uild-out*/
+[Ll]og/
+
+## Visual Studio / VS Code
+.vs/
+*.user
+*.userosscache
+*.suo
+*.rsuser
+.idea/
+
+## NuGet
+packages/
+*.nupkg
+
+## OS
+Thumbs.db
+[Dd]esktop.ini
+
+## Others
+*.DotSettings.user
+
+## Local database / secrets (do not commit)
+appsettings.Development.json
+Data/library-data.json

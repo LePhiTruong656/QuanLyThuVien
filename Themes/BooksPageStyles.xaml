@@ -1,0 +1,196 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/Themes/Colors.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- Figma-aligned search field (rounded 12, shadow, left icon padding) -->
+    <Style x:Key="Books.SearchTextBox" TargetType="TextBox">
+        <Setter Property="Height" Value="48"/>
+        <Setter Property="Padding" Value="46,0,16,0"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FontFamily" Value="{StaticResource InterFont}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Background" Value="{StaticResource WhiteBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CaretBrush" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="12">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="2" ShadowDepth="1"
+                                              Direction="270" Color="#000000" Opacity="0.05"/>
+                        </Border.Effect>
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Padding="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Secondary toolbar button: Bộ lọc -->
+    <Style x:Key="Books.OutlineToolbarButton" TargetType="Button">
+        <Setter Property="Height" Value="48"/>
+        <Setter Property="Padding" Value="22,0"/>
+        <Setter Property="Background" Value="{StaticResource WhiteBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="12" Padding="{TemplateBinding Padding}">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="2" ShadowDepth="1"
+                                              Direction="270" Color="#000000" Opacity="0.05"/>
+                        </Border.Effect>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="{StaticResource Surface50Brush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Primary: Thêm sách (+) — #005AB4, soft blue shadow -->
+    <Style x:Key="Books.PrimaryButton" TargetType="Button">
+        <Setter Property="Height" Value="48"/>
+        <Setter Property="Padding" Value="30,0"/>
+        <Setter Property="Background" Value="#005AB4"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="12" Padding="{TemplateBinding Padding}">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="15" ShadowDepth="4"
+                                              Direction="270" Color="#005AB4" Opacity="0.2"/>
+                        </Border.Effect>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="#004A99"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Table header row (Figma: #F8FAFC, bottom border, bold 12px uppercase) -->
+    <Style x:Key="Books.DataGridColumnHeader" TargetType="DataGridColumnHeader"
+           BasedOn="{StaticResource DataGridColumnHeaderStyle}">
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Padding" Value="24,20"/>
+        <Setter Property="Height" Value="NaN"/>
+        <Setter Property="MinHeight" Value="56"/>
+    </Style>
+
+    <!-- Table body row -->
+    <Style x:Key="Books.DataGridRow" TargetType="DataGridRow" BasedOn="{StaticResource DataGridRowStyle}">
+        <Setter Property="MinHeight" Value="100"/>
+        <Setter Property="BorderBrush" Value="#F1F5F9"/>
+    </Style>
+
+    <!-- Pagination: bordered nav -->
+    <Style x:Key="Books.PageNavButton" TargetType="Button">
+        <Setter Property="Width" Value="36"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="Background" Value="{StaticResource WhiteBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="{StaticResource Surface50Brush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Books.PageNumberButton" TargetType="Button">
+        <Setter Property="Width" Value="36"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontFamily" Value="{StaticResource InterFont}"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="Foreground" Value="#475569"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                            CornerRadius="8">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="{StaticResource Surface50Brush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Books.PageNumberButton.Active" TargetType="Button"
+           BasedOn="{StaticResource Books.PageNumberButton}">
+        <Setter Property="Background" Value="#005AB4"/>
+        <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="2" ShadowDepth="1"
+                                              Direction="270" Color="#000000" Opacity="0.05"/>
+                        </Border.Effect>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Row action: square icon hit-target -->
+    <Style x:Key="Books.RowIconButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
+        <Setter Property="Width" Value="34"/>
+        <Setter Property="Height" Value="34"/>
+    </Style>
+
+</ResourceDictionary>
