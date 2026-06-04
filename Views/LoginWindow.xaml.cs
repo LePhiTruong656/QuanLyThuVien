@@ -21,6 +21,48 @@ namespace LibraryManagementFE.Views
             optionsBuilder.UseSqlServer(DatabaseSettings.GetConnectionString());
             _context = new LibraryDbContext(optionsBuilder.Options);
             _authService = new AuthService(_context);
+
+            // Load saved credentials nếu có
+            LoadSavedCredentials();
+        }
+
+        /// <summary>
+        /// Load thông tin đăng nhập đã lưu (nếu user đã chọn Remember Me trước đó)
+        /// </summary>
+        private void LoadSavedCredentials()
+        {
+            var preferences = UserPreferences.Load();
+
+            if (preferences.RememberMe && !string.IsNullOrEmpty(preferences.SavedEmail))
+            {
+                TxtEmail.Text = preferences.SavedEmail;
+                ChkRememberMe.IsChecked = true;
+
+                // Giải mã password nếu có
+                if (!string.IsNullOrEmpty(preferences.EncryptedPassword))
+                {
+                    string decryptedPassword = CredentialHelper.Unprotect(preferences.EncryptedPassword);
+                    if (!string.IsNullOrEmpty(decryptedPassword))
+                    {
+                        TxtPassword.Password = decryptedPassword;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Lưu credentials nếu user chọn Remember Me
+        /// </summary>
+        private void SaveCredentials(string email, string password, bool rememberMe)
+        {
+            var preferences = new UserPreferences
+            {
+                RememberMe = rememberMe,
+                SavedEmail = rememberMe ? email : string.Empty,
+                EncryptedPassword = rememberMe ? CredentialHelper.Protect(password) : string.Empty
+            };
+
+            preferences.Save();
         }
 
         private void BtnTogglePassword_Click(object sender, RoutedEventArgs e)
@@ -60,6 +102,10 @@ namespace LibraryManagementFE.Views
                 MessageBox.Show(result.message, "Đăng nhập thất bại", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
+
+            // Lưu credentials nếu user chọn Remember Me
+            bool rememberMe = ChkRememberMe.IsChecked == true;
+            SaveCredentials(email, password, rememberMe);
 
             // Lấy thông tin reader nếu có
             var reader = _authService.GetReaderByUserId(result.user!.Id);

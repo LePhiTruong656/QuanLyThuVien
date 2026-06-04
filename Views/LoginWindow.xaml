@@ -323,7 +323,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <CheckBox Content="Ghi nhớ tôi"
+                            <CheckBox x:Name="ChkRememberMe" Content="Ghi nhớ tôi"
                                       FontFamily="{StaticResource InterFont}"
                                       FontSize="13" Foreground="#CCE2E8F0"
                                       VerticalAlignment="Center"/>

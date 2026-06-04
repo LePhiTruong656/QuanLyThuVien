@@ -131,6 +131,9 @@
                               SelectionMode="Single"
                               FontFamily="{StaticResource InterFont}"
                               FontSize="14"
+                              ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              ScrollViewer.CanContentScroll="False"
                               ColumnHeaderStyle="{StaticResource Books.DataGridColumnHeader}"
                               RowStyle="{StaticResource Books.DataGridRow}"
                               CellStyle="{StaticResource DataGridCellStyle}">
