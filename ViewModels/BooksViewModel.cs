@@ -66,7 +66,7 @@ namespace LibraryManagementFE.ViewModels
                     query = query.Where(book => book.AddedDate.Date <= addedTo.Date);
                 }
 
-                return query;
+                return query.OrderBy(book => book.Stt);
             }
         }
 
@@ -135,7 +135,7 @@ namespace LibraryManagementFE.ViewModels
             _store = LibraryDataStoreFile.LoadOrCreate();
             // populate from shared data store so menus and borrow/return use same book data
             Books.Clear();
-            foreach (var b in _store.Books)
+            foreach (var b in _store.Books.OrderBy(b => b.Stt))
                 Books.Add(b);
 
             FilterCommand = new RelayCommand(OpenFilterDialog);
