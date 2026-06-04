@@ -312,12 +312,14 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <StackPanel VerticalAlignment="Center" Margin="0,0,12,0"
                                         HorizontalAlignment="Right">
-                                <TextBlock Text="Nguyễn Văn A"
+                                <TextBlock x:Name="UserNameText"
+                                           Text="Người dùng"
                                            FontFamily="{StaticResource InterFont}"
                                            FontSize="12" FontWeight="Bold"
                                            Foreground="{StaticResource TextPrimaryBrush}"
                                            HorizontalAlignment="Right"/>
-                                <TextBlock Text="ADMIN"
+                                <TextBlock x:Name="UserRoleText"
+                                           Text="THÀNH VIÊN"
                                            FontFamily="{StaticResource InterFont}"
                                            FontSize="10" FontWeight="Medium"
                                            Foreground="{StaticResource TextMutedBrush}"
@@ -332,7 +334,8 @@
                                     <DropShadowEffect BlurRadius="4" ShadowDepth="2"
                                                       Direction="270" Color="#000000" Opacity="0.15"/>
                                 </Border.Effect>
-                                <TextBlock Text="NA"
+                                <TextBlock x:Name="UserInitialsText"
+                                           Text="U"
                                            FontFamily="{StaticResource InterFont}"
                                            FontSize="12" FontWeight="Bold"
                                            Foreground="{StaticResource BrandDeepBrush}"

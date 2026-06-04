@@ -5,22 +5,33 @@ using LibraryManagementFE.Models;
 using LibraryManagementFE.Services;
 using LibraryManagementFE.ViewModels;
 using LibraryManagementFE.Views.Register;
+using LibraryManagementFE.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagementFE.Views
 {
     public partial class RegisterWindow : Window
     {
         private readonly RegisterViewModel _vm = new();
-        private readonly LibraryDataStore _store;
+        private readonly LibraryDbContext _context;
+        private readonly AuthService _authService;
 
         private readonly RegisterStep1View _step1 = new();
         private readonly RegisterStep2View _step2 = new();
         private readonly RegisterStep3View _step3 = new();
 
+        private string _registeredPassword = string.Empty; // Lưu password từ step 1
+
         public RegisterWindow()
         {
             InitializeComponent();
-            _store = LibraryDataStoreFile.LoadOrCreate();
+
+            // Khởi tạo DbContext và AuthService
+            var optionsBuilder = new DbContextOptionsBuilder<LibraryDbContext>();
+            optionsBuilder.UseSqlServer(DatabaseSettings.GetConnectionString());
+            _context = new LibraryDbContext(optionsBuilder.Options);
+            _authService = new AuthService(_context);
+
             DataContext = _vm;
             StepContent.Content = _step1;
         }
@@ -31,7 +42,17 @@ namespace LibraryManagementFE.Views
             {
                 case 1:
                     if (_vm.ValidateStep1(_step1.Password, _step1.ConfirmPassword))
+                    {
+                        // Kiểm tra email đã tồn tại chưa
+                        if (_authService.EmailExists(_vm.Email))
+                        {
+                            MessageBox.Show("Email này đã được đăng ký. Vui lòng sử dụng email khác.",
+                                "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            return;
+                        }
+                        _registeredPassword = _step1.Password; // Lưu password
                         GoToStep(2);
+                    }
                     break;
 
                 case 2:
@@ -66,20 +87,37 @@ namespace LibraryManagementFE.Views
 
         private void FinishRegistration()
         {
-            SaveNewReader();
+            try
+            {
+                // 1. Tạo Reader record
+                var readerId = SaveNewReader();
 
-            MessageBox.Show(
-                $"Đăng ký thành công!\nChào mừng {_vm.FullName} đến với thư viện UIT.",
-                "Thông báo",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+                // 2. Đăng ký User với password đã hash
+                var result = _authService.Register(_vm.Email, _registeredPassword, readerId);
 
-            LoginWindow loginWindow = new LoginWindow();
-            loginWindow.Show();
-            Close();
+                if (!result.success)
+                {
+                    MessageBox.Show(result.message, "Lỗi đăng ký", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                MessageBox.Show(
+                    $"Đăng ký thành công!\nChào mừng {_vm.FullName} đến với thư viện UIT.",
+                    "Thông báo",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                LoginWindow loginWindow = new LoginWindow();
+                loginWindow.Show();
+                Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi đăng ký: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
-        private void SaveNewReader()
+        private string SaveNewReader()
         {
             var birthDate = _vm.DateOfBirth;
             if (!string.IsNullOrWhiteSpace(_vm.DateOfBirth) &&
@@ -100,8 +138,16 @@ namespace LibraryManagementFE.Views
                 Status = ReaderStatus.HoatDong
             };
 
-            _store.Readers.Add(newReader);
-            LibraryDataStoreFile.Save(_store);
+            _context.Readers.Add(newReader);
+            _context.SaveChanges();
+
+            return newReader.Id;
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            _context?.Dispose();
         }
 
         private void BtnLogin_Click(object sender, RoutedEventArgs e)
