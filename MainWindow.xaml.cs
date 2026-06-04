@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using LibraryManagementFE.Views;
+using LibraryManagementFE.Services;
 
 namespace LibraryManagementFE
 {
@@ -16,6 +17,32 @@ namespace LibraryManagementFE
         public MainWindow()
         {
             InitializeComponent();
+
+            // Hiển thị tên user đã đăng nhập
+            if (CurrentUser.IsLoggedIn)
+            {
+                UserNameText.Text = CurrentUser.GetDisplayName();
+
+                // Hiển thị initials (chữ cái đầu của tên)
+                var name = CurrentUser.GetDisplayName();
+                var nameParts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (nameParts.Length >= 2)
+                {
+                    UserInitialsText.Text = $"{nameParts[0][0]}{nameParts[^1][0]}".ToUpper();
+                }
+                else if (nameParts.Length == 1 && nameParts[0].Length > 0)
+                {
+                    UserInitialsText.Text = nameParts[0][0].ToString().ToUpper();
+                }
+
+                // Hiển thị role
+                if (CurrentUser.Reader != null)
+                {
+                    UserRoleText.Text = CurrentUser.Reader.CardType == Models.CardType.SinhVien
+                        ? "SINH VIÊN"
+                        : "GIẢNG VIÊN";
+                }
+            }
 
             _navButtons = new Dictionary<string, Button>
             {
@@ -143,7 +170,17 @@ namespace LibraryManagementFE
                 MessageBoxImage.Question);
 
             if (result == MessageBoxResult.Yes)
-                Application.Current.Shutdown();
+            {
+                // Xóa session user hiện tại
+                CurrentUser.Logout();
+
+                // Mở LoginWindow
+                LoginWindow loginWindow = new LoginWindow();
+                loginWindow.Show();
+
+                // Đóng MainWindow
+                this.Close();
+            }
         }
 
         // ── Placeholder page for unimplemented sections ─────────────────

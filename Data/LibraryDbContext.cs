@@ -10,6 +10,7 @@ namespace LibraryManagementFE.Data
         {
         }
 
+        public DbSet<User> Users => Set<User>();
         public DbSet<ReaderRecord> Readers => Set<ReaderRecord>();
         public DbSet<BookRecord> Books => Set<BookRecord>();
         public DbSet<BorrowRecord> Borrows => Set<BorrowRecord>();
@@ -17,6 +18,19 @@ namespace LibraryManagementFE.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // User configuration
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.ToTable("Users");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(64);
+                entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
+                entity.Property(e => e.PasswordHash).HasMaxLength(512).IsRequired();
+                entity.Property(e => e.ReaderId).HasMaxLength(64);
+                entity.Property(e => e.CreatedAt).HasMaxLength(32);
+                entity.HasIndex(e => e.Email).IsUnique();
+            });
+
             modelBuilder.Entity<ReaderRecord>(entity =>
             {
                 entity.ToTable("Readers");
