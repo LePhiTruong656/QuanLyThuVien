@@ -11,6 +11,8 @@ using System.Windows.Controls;
 using LibraryManagementFE.Models;
 using LibraryManagementFE.Policies;
 using LibraryManagementFE.Services;
+using LibraryManagementFE.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 
 namespace LibraryManagementFE.Views
@@ -18,6 +20,7 @@ namespace LibraryManagementFE.Views
     public partial class ReportsStatisticsView : UserControl, INotifyPropertyChanged
     {
         private readonly BorrowService _service;
+        private readonly LibraryDbContext _context;
         private DateTime? _fromDate;
         private DateTime? _toDate;
 
@@ -32,12 +35,14 @@ namespace LibraryManagementFE.Views
         private int _totalReturns;
         private int _activeBorrows;
         private int _overdueBorrows;
+        private int _activeReaders;
         private decimal _totalFines;
 
         public int TotalBorrows { get => _totalBorrows; private set { if (_totalBorrows == value) return; _totalBorrows = value; OnPropertyChanged(); } }
         public int TotalReturns { get => _totalReturns; private set { if (_totalReturns == value) return; _totalReturns = value; OnPropertyChanged(); } }
         public int ActiveBorrows { get => _activeBorrows; private set { if (_activeBorrows == value) return; _activeBorrows = value; OnPropertyChanged(); } }
         public int OverdueBorrows { get => _overdueBorrows; private set { if (_overdueBorrows == value) return; _overdueBorrows = value; OnPropertyChanged(); } }
+        public int ActiveReaders { get => _activeReaders; private set { if (_activeReaders == value) return; _activeReaders = value; OnPropertyChanged(); } }
         public decimal TotalFines { get => _totalFines; private set { if (_totalFines == value) return; _totalFines = value; OnPropertyChanged(); OnPropertyChanged(nameof(TotalFinesDisplay)); } }
         public string TotalFinesDisplay => string.Format(CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} đ", TotalFines);
         public string OnTimeReturnRateDisplay => TotalReturns == 0 ? "N/A" : string.Format(CultureInfo.GetCultureInfo("vi-VN"), "{0:P1}", Math.Round(GetOnTimeReturnRate(), 3));
@@ -47,6 +52,11 @@ namespace LibraryManagementFE.Views
             InitializeComponent();
             DataContext = this;
             _service = new BorrowService(LibraryPolicyStore.LoadOrCreate());
+
+            var optionsBuilder = new DbContextOptionsBuilder<LibraryDbContext>();
+            optionsBuilder.UseSqlServer(DatabaseSettings.GetConnectionString());
+            _context = new LibraryDbContext(optionsBuilder.Options);
+
             FromDate = DateTime.Now.AddMonths(-1);
             ToDate = DateTime.Now;
 
@@ -82,7 +92,8 @@ namespace LibraryManagementFE.Views
         {
             if (TotalReturns == 0) return 0.0;
             // Returned on time are returned records with FineAmount == 0
-            var returnedOnTime = _service.Borrows
+            var allRecords = _context.Borrows.ToList();
+            var returnedOnTime = allRecords
                 .Where(b => DateTime.TryParse(b.BorrowDate, out var bd) && FromDate.HasValue && ToDate.HasValue && bd.Date >= FromDate.Value.Date && bd.Date <= ToDate.Value.Date)
                 .Count(b => (b.Status == Models.BorrowStatus.DaTraTot || b.Status == Models.BorrowStatus.DaTraTre) && b.FineAmount == 0);
             return (double)returnedOnTime / Math.Max(1, TotalReturns);
@@ -95,7 +106,9 @@ namespace LibraryManagementFE.Views
             var from = FromDate.Value;
             var to = ToDate.Value;
 
-            var records = _service.Borrows
+            // Fetch all records from database first, then filter in memory
+            var allRecords = _context.Borrows.ToList();
+            var records = allRecords
                 .Where(b => DateTime.TryParse(b.BorrowDate, out var borrowDate) && borrowDate.Date >= from.Date && borrowDate.Date <= to.Date)
                 .ToList();
 
@@ -103,38 +116,96 @@ namespace LibraryManagementFE.Views
             ActiveBorrows = records.Count(b => b.Status == Models.BorrowStatus.DangMuon);
             TotalReturns = records.Count(b => b.Status == Models.BorrowStatus.DaTraTot || b.Status == Models.BorrowStatus.DaTraTre);
             OverdueBorrows = records.Count(b => b.Status == Models.BorrowStatus.QuaHan);
-            TotalFines = _service.TotalFinesCollected(from, to);
+            ActiveReaders = _context.Readers.Count(r => r.Status == ReaderStatus.HoatDong);
+            TotalFines = records.Where(b => b.Status == Models.BorrowStatus.DaTraTre).Sum(b => b.FineAmount);
 
-            // Monthly stats
+            // Monthly stats - last 6 months
             MonthlyStats.Clear();
-            foreach (var m in _service.MonthlyBorrowCounts(6))
-                MonthlyStats.Add(m);
+            var monthlyData = allRecords
+                .Where(b => DateTime.TryParse(b.BorrowDate, out var bd) && bd >= DateTime.Now.AddMonths(-6))
+                .GroupBy(b => DateTime.Parse(b.BorrowDate).ToString("yyyy-MM"))
+                .Select(g => new MonthlyBorrowPoint
+                {
+                    Month = g.Key,
+                    Count = g.Count(),
+                    RelativeHeight = 0
+                })
+                .OrderBy(m => m.Month)
+                .ToList();
+
+            if (monthlyData.Any())
+            {
+                var maxCount = monthlyData.Max(m => m.Count);
+                foreach (var m in monthlyData)
+                {
+                    m.RelativeHeight = maxCount > 0 ? (double)m.Count / maxCount : 0;
+                    MonthlyStats.Add(m);
+                }
+            }
 
             // Top books
             TopBooksReport.Clear();
-            foreach (var t in _service.TopBooks(10))
-                TopBooksReport.Add(t);
+            var allBooks = _context.Books.ToList();
+            var topBooks = allRecords
+                .GroupBy(b => new { b.BookId, b.BookTitle, b.Author })
+                .Select(g => new
+                {
+                    g.Key.BookId,
+                    g.Key.BookTitle,
+                    g.Key.Author,
+                    Count = g.Count()
+                })
+                .OrderByDescending(x => x.Count)
+                .Take(10)
+                .ToList();
+
+            int rank = 1;
+            foreach (var book in topBooks)
+            {
+                var bookRecord = allBooks.FirstOrDefault(b => b.Id == book.BookId);
+                TopBooksReport.Add(new TopBookRecord
+                {
+                    Rank = rank++,
+                    Title = book.BookTitle,
+                    Author = book.Author,
+                    Borrows = book.Count,
+                    Category = bookRecord?.CategoryLine1 ?? "Chưa phân loại",
+                    CatBg = bookRecord?.CategoryPillBg ?? "#EFF6FF",
+                    CatFg = bookRecord?.CategoryPillFg ?? "#1978E5"
+                });
+            }
 
             // Top readers
             TopReadersReport.Clear();
-            var topReaders = _service.Borrows.GroupBy(b => b.ReaderName)
-                .Select(g => new TopReaderRecord { Name = g.Key, CardNumber = g.FirstOrDefault()?.CardNumber ?? string.Empty, Borrows = g.Count() })
-                .OrderByDescending(r => r.Borrows).Take(10).ToList();
-            for (int i = 0; i < topReaders.Count; i++)
+            var topReaders = allRecords
+                .GroupBy(b => new { b.ReaderId, b.ReaderName, b.CardNumber })
+                .Select(g => new TopReaderRecord
+                {
+                    Name = g.Key.ReaderName,
+                    CardNumber = g.Key.CardNumber,
+                    Borrows = g.Count()
+                })
+                .OrderByDescending(r => r.Borrows)
+                .Take(10)
+                .ToList();
+
+            rank = 1;
+            foreach (var reader in topReaders)
             {
-                topReaders[i].Rank = i + 1;
-                TopReadersReport.Add(topReaders[i]);
+                reader.Rank = rank++;
+                TopReadersReport.Add(reader);
             }
 
             // Late returns report
             LateReturnsReport.Clear();
-            var lateReturns = _service.Borrows
+            var lateReturns = allRecords
                 .Where(b => b.Status == Models.BorrowStatus.DaTraTre &&
                            DateTime.TryParse(b.ReturnDate, out var rd) &&
                            DateTime.TryParse(b.DueDate, out var dd) &&
                            rd.Date >= from.Date && rd.Date <= to.Date)
-                .OrderByDescending(b => DateTime.TryParse(b.ReturnDate, out var _))
+                .OrderByDescending(b => DateTime.Parse(b.ReturnDate))
                 .ToList();
+
             int stt = 1;
             foreach (var late in lateReturns)
             {
@@ -156,9 +227,17 @@ namespace LibraryManagementFE.Views
 
             // Category borrow report (by month and category)
             CategoryBorrowReport.Clear();
-            var categoryStats = _service.Borrows
-                .Where(b => DateTime.TryParse(b.BorrowDate, out var bd) && bd.Date >= from.Date && bd.Date <= to.Date)
-                .GroupBy(b => new { Month = DateTime.ParseExact(b.BorrowDate, "yyyy-MM-dd", CultureInfo.InvariantCulture).ToString("yyyy-MM"), Category = b.BookTitle.Substring(0, Math.Min(3, b.BookTitle.Length)) })
+            var categoryStats = records
+                .Select(b =>
+                {
+                    var book = allBooks.FirstOrDefault(bk => bk.Id == b.BookId);
+                    return new
+                    {
+                        Month = DateTime.Parse(b.BorrowDate).ToString("yyyy-MM"),
+                        Category = book?.CategoryLine1 ?? "Chưa phân loại"
+                    };
+                })
+                .GroupBy(x => new { x.Month, x.Category })
                 .Select(g => new { g.Key.Month, g.Key.Category, Count = g.Count() })
                 .ToList();
 
@@ -238,7 +317,10 @@ namespace LibraryManagementFE.Views
 
         private ReportData BuildReportData(DateTime from, DateTime to)
         {
-            var records = _service.Borrows
+            var allRecords = _context.Borrows.ToList();
+            var allBooks = _context.Books.ToList();
+
+            var records = allRecords
                 .Where(b => DateTime.TryParse(b.BorrowDate, out var borrowDate) && borrowDate.Date >= from.Date && borrowDate.Date <= to.Date)
                 .ToList();
 
@@ -246,25 +328,33 @@ namespace LibraryManagementFE.Views
             var activeBorrows = records.Count(b => b.Status == Models.BorrowStatus.DangMuon);
             var returnedBorrows = records.Count(b => b.Status == Models.BorrowStatus.DaTraTot || b.Status == Models.BorrowStatus.DaTraTre);
             var overdueBorrows = records.Count(b => b.Status == Models.BorrowStatus.QuaHan);
-            var totalFines = _service.TotalFinesCollected(from, to);
-            var totalOutstanding = _service.TotalOutstandingFine();
+            var totalFines = records.Where(b => b.Status == Models.BorrowStatus.DaTraTre).Sum(b => b.FineAmount);
+            var totalOutstanding = allRecords.Where(b => b.Status == Models.BorrowStatus.QuaHan || b.Status == Models.BorrowStatus.DaTraTre).Sum(b => b.OutstandingFine);
             var totalFinesDisplay = string.Format(CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} đ", totalFines);
             var totalOutstandingDisplay = string.Format(CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} đ", totalOutstanding);
 
-            var monthlyRows = _service.MonthlyBorrowCounts(6)
-                .Select(m => new ReportRow { Cells = new[] { m.Month, m.Count.ToString(CultureInfo.InvariantCulture) } })
+            var monthlyRows = allRecords
+                .Where(b => DateTime.TryParse(b.BorrowDate, out var bd) && bd >= DateTime.Now.AddMonths(-6))
+                .GroupBy(b => DateTime.Parse(b.BorrowDate).ToString("yyyy-MM"))
+                .Select(g => new ReportRow { Cells = new[] { g.Key, g.Count().ToString(CultureInfo.InvariantCulture) } })
+                .OrderBy(r => r.Cells[0])
                 .ToList();
 
-            var topBookRows = _service.TopBooks(10)
-                .Select(t => new ReportRow { Cells = new[] { t.Rank.ToString(CultureInfo.InvariantCulture), t.Title, t.Author, t.Borrows.ToString(CultureInfo.InvariantCulture) } })
+            var topBookRows = allRecords
+                .GroupBy(b => new { b.BookId, b.BookTitle, b.Author })
+                .Select(g => new { g.Key.BookTitle, g.Key.Author, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .Take(10)
+                .ToList()
+                .Select((t, idx) => new ReportRow { Cells = new[] { (idx + 1).ToString(CultureInfo.InvariantCulture), t.BookTitle, t.Author, t.Count.ToString(CultureInfo.InvariantCulture) } })
                 .ToList();
 
-            var lateReturnRows = _service.Borrows
+            var lateReturnRows = allRecords
                 .Where(b => b.Status == Models.BorrowStatus.DaTraTre &&
                            DateTime.TryParse(b.ReturnDate, out var rd) &&
                            DateTime.TryParse(b.DueDate, out var dd) &&
                            rd.Date >= from.Date && rd.Date <= to.Date)
-                .OrderByDescending(b => DateTime.TryParse(b.ReturnDate, out var _))
+                .OrderByDescending(b => DateTime.Parse(b.ReturnDate))
                 .Select((b, idx) =>
                 {
                     if (DateTime.TryParse(b.ReturnDate, out var returnDate) &&
@@ -279,9 +369,17 @@ namespace LibraryManagementFE.Views
                 .Cast<ReportRow>()
                 .ToList();
 
-            var categoryBorrowRows = _service.Borrows
-                .Where(b => DateTime.TryParse(b.BorrowDate, out var bd) && bd.Date >= from.Date && bd.Date <= to.Date)
-                .GroupBy(b => new { Month = DateTime.ParseExact(b.BorrowDate, "yyyy-MM-dd", CultureInfo.InvariantCulture).ToString("yyyy-MM"), Category = b.BookTitle.Substring(0, Math.Min(3, b.BookTitle.Length)) })
+            var categoryBorrowRows = records
+                .Select(b =>
+                {
+                    var book = allBooks.FirstOrDefault(bk => bk.Id == b.BookId);
+                    return new
+                    {
+                        Month = DateTime.Parse(b.BorrowDate).ToString("yyyy-MM"),
+                        Category = book?.CategoryLine1 ?? "Chưa phân loại"
+                    };
+                })
+                .GroupBy(x => new { x.Month, x.Category })
                 .Select(g => new { g.Key.Month, g.Key.Category, Count = g.Count() })
                 .OrderBy(x => x.Month)
                 .ThenByDescending(x => x.Count)
