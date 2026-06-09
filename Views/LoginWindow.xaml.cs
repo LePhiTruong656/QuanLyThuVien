@@ -1,20 +1,50 @@
 using System;
+using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using LibraryManagementFE.Data;
+using LibraryManagementFE.Models;
 using LibraryManagementFE.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagementFE.Views
 {
-    public partial class LoginWindow : Window
+    public partial class LoginWindow : Window, INotifyPropertyChanged
     {
         private bool _isPasswordVisible = false;
         private readonly LibraryDbContext _context;
         private readonly AuthService _authService;
 
+        // Statistics properties
+        private string _totalBooks = "0";
+        private string _totalReaders = "0";
+        private string _onTimeRate = "0%";
+
+        public string TotalBooks
+        {
+            get => _totalBooks;
+            set { _totalBooks = value; OnPropertyChanged(); }
+        }
+
+        public string TotalReaders
+        {
+            get => _totalReaders;
+            set { _totalReaders = value; OnPropertyChanged(); }
+        }
+
+        public string OnTimeRate
+        {
+            get => _onTimeRate;
+            set { _onTimeRate = value; OnPropertyChanged(); }
+        }
+
+        public string StatsDescription => $"Quản lý hơn {TotalBooks} đầu sách, theo dõi mượn–trả, phục vụ {TotalReaders} độc giả trên một nền tảng duy nhất.";
+
         public LoginWindow()
         {
             InitializeComponent();
+            DataContext = this;
 
             // Khởi tạo DbContext và AuthService
             var optionsBuilder = new DbContextOptionsBuilder<LibraryDbContext>();
@@ -22,8 +52,46 @@ namespace LibraryManagementFE.Views
             _context = new LibraryDbContext(optionsBuilder.Options);
             _authService = new AuthService(_context);
 
+            // Load statistics
+            LoadStatistics();
+
             // Load saved credentials nếu có
             LoadSavedCredentials();
+        }
+
+        private void LoadStatistics()
+        {
+            try
+            {
+                // Total books
+                var totalBooksCount = _context.Books.Count();
+                TotalBooks = totalBooksCount >= 1000
+                    ? $"{totalBooksCount / 1000.0:N1}K".Replace(".0", "")
+                    : totalBooksCount.ToString();
+
+                // Total active readers
+                var totalReadersCount = _context.Readers.Count(r => r.Status == ReaderStatus.HoatDong);
+                TotalReaders = totalReadersCount >= 1000
+                    ? $"{totalReadersCount / 1000.0:N1}K+".Replace(".0", "")
+                    : $"{totalReadersCount}+";
+
+                // On-time return rate
+                var allBorrows = _context.Borrows.ToList();
+                var returned = allBorrows.Count(b => b.Status == BorrowStatus.DaTraTot || b.Status == BorrowStatus.DaTraTre);
+                var onTime = allBorrows.Count(b => b.Status == BorrowStatus.DaTraTot);
+
+                if (returned > 0)
+                {
+                    var rate = (double)onTime / returned * 100;
+                    OnTimeRate = $"{rate:F1}%";
+                }
+
+                OnPropertyChanged(nameof(StatsDescription));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading statistics: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -146,5 +214,9 @@ namespace LibraryManagementFE.Views
             registerWindow.Show();
             this.Close();
         }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? name = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

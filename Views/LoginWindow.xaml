@@ -130,7 +130,7 @@
                            Margin="0,0,0,20"/>
 
                 <!-- Description -->
-                <TextBlock Text="Quản lý hơn 12,000 đầu sách, theo dõi mượn–trả, phục vụ 3,200+ độc giả trên một nền tảng duy nhất."
+                <TextBlock Text="{Binding StatsDescription}"
                            FontFamily="{StaticResource InterFont}"
                            FontSize="15"
                            Foreground="#B3FFFFFF"
@@ -184,7 +184,7 @@
                 <!-- Stats row -->
                 <StackPanel Orientation="Horizontal">
                     <StackPanel Margin="0,0,44,0">
-                        <TextBlock Text="12.4K"
+                        <TextBlock Text="{Binding TotalBooks}"
                                    FontFamily="{StaticResource InterFont}"
                                    FontSize="26" FontWeight="Bold"
                                    Foreground="#FFFFFF"/>
@@ -194,7 +194,7 @@
                                    Foreground="#66FFFFFF"/>
                     </StackPanel>
                     <StackPanel Margin="0,0,44,0">
-                        <TextBlock Text="3.2K"
+                        <TextBlock Text="{Binding TotalReaders}"
                                    FontFamily="{StaticResource InterFont}"
                                    FontSize="26" FontWeight="Bold"
                                    Foreground="#FFFFFF"/>
@@ -204,7 +204,7 @@
                                    Foreground="#66FFFFFF"/>
                     </StackPanel>
                     <StackPanel>
-                        <TextBlock Text="98.5%"
+                        <TextBlock Text="{Binding OnTimeRate}"
                                    FontFamily="{StaticResource InterFont}"
                                    FontSize="26" FontWeight="Bold"
                                    Foreground="#FFFFFF"/>

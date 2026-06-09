@@ -3,21 +3,74 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using LibraryManagementFE.Models;
+using LibraryManagementFE.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace LibraryManagementFE.ViewModels
 {
     public class DashboardViewModel : INotifyPropertyChanged
     {
-        // ── Metric Cards ────────────────────────────────────────────────
-        public string TotalBooks        { get; } = "12,482";
-        public string BorrowedBooks     { get; } = "856";
-        public string ActiveReaders     { get; } = "3,120";
-        public string OverdueBooks      { get; } = "42";
+        private readonly LibraryDbContext _context;
 
-        public string TotalBooksBadge   { get; } = "+2.5%";
-        public string BorrowedBadge     { get; } = "+1.8%";
-        public string ActiveBadge       { get; } = "0%";
-        public string OverdueBadge      { get; } = "+5%";
+        // ── Metric Cards ────────────────────────────────────────────────
+        private string _totalBooks = "0";
+        private string _borrowedBooks = "0";
+        private string _activeReaders = "0";
+        private string _overdueBooks = "0";
+
+        private string _totalBooksBadge = "0%";
+        private string _borrowedBadge = "0%";
+        private string _activeBadge = "0%";
+        private string _overdueBadge = "0%";
+
+        public string TotalBooks
+        {
+            get => _totalBooks;
+            set { _totalBooks = value; OnPropertyChanged(); }
+        }
+
+        public string BorrowedBooks
+        {
+            get => _borrowedBooks;
+            set { _borrowedBooks = value; OnPropertyChanged(); }
+        }
+
+        public string ActiveReaders
+        {
+            get => _activeReaders;
+            set { _activeReaders = value; OnPropertyChanged(); }
+        }
+
+        public string OverdueBooks
+        {
+            get => _overdueBooks;
+            set { _overdueBooks = value; OnPropertyChanged(); }
+        }
+
+        public string TotalBooksBadge
+        {
+            get => _totalBooksBadge;
+            set { _totalBooksBadge = value; OnPropertyChanged(); }
+        }
+
+        public string BorrowedBadge
+        {
+            get => _borrowedBadge;
+            set { _borrowedBadge = value; OnPropertyChanged(); }
+        }
+
+        public string ActiveBadge
+        {
+            get => _activeBadge;
+            set { _activeBadge = value; OnPropertyChanged(); }
+        }
+
+        public string OverdueBadge
+        {
+            get => _overdueBadge;
+            set { _overdueBadge = value; OnPropertyChanged(); }
+        }
 
         // ── Bar Chart ───────────────────────────────────────────────────
         public ObservableCollection<BarChartItem> ChartItems { get; }
@@ -37,6 +90,151 @@ namespace LibraryManagementFE.ViewModels
         }
 
         public DashboardViewModel()
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<LibraryDbContext>();
+            optionsBuilder.UseSqlServer(DatabaseSettings.GetConnectionString());
+            _context = new LibraryDbContext(optionsBuilder.Options);
+
+            ChartItems = new ObservableCollection<BarChartItem>();
+            Categories = new ObservableCollection<CategoryItem>();
+            Transactions = new ObservableCollection<TransactionRecord>();
+
+            // Load data synchronously in constructor
+            LoadDashboardDataSync();
+        }
+
+        private void LoadDashboardDataSync()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("LoadDashboardDataSync: Starting...");
+
+                // Card 1: Tổng số sách
+                var totalBooksCount = _context.Books.Count();
+                TotalBooks = totalBooksCount.ToString("N0");
+                System.Diagnostics.Debug.WriteLine($"Total Books: {TotalBooks}");
+
+                // Card 2: Đang được mượn (sách có Availability = DangMuon)
+                var borrowedCount = _context.Books
+                    .Where(b => b.Availability == BookAvailability.DangMuon)
+                    .Count();
+                BorrowedBooks = borrowedCount.ToString("N0");
+                System.Diagnostics.Debug.WriteLine($"Borrowed Books: {BorrowedBooks}");
+
+                // Card 3: Độc giả đang hoạt động (Status = HoatDong)
+                var activeReadersCount = _context.Readers
+                    .Where(r => r.Status == ReaderStatus.HoatDong)
+                    .Count();
+                ActiveReaders = activeReadersCount.ToString("N0");
+                System.Diagnostics.Debug.WriteLine($"Active Readers: {ActiveReaders}");
+
+                // Card 4: Sách trả trễ (BorrowStatus = DaTraTre)
+                var overdueCount = _context.Borrows
+                    .Where(b => b.Status == BorrowStatus.DaTraTre)
+                    .Count();
+                OverdueBooks = overdueCount.ToString("N0");
+                System.Diagnostics.Debug.WriteLine($"Overdue Books: {OverdueBooks}");
+
+                // Calculate badges (compare with last month)
+                var now = DateTime.Now;
+                var lastMonthStart = new DateTime(now.Year, now.Month, 1).AddMonths(-1);
+                var lastMonthEnd = new DateTime(now.Year, now.Month, 1).AddDays(-1);
+
+                // Calculate percentage changes
+                TotalBooksBadge = "+2.5%";  // Placeholder - would need historical data
+                BorrowedBadge = "+1.8%";    // Placeholder
+                ActiveBadge = "0%";          // Placeholder
+                OverdueBadge = "+5%";        // Placeholder
+
+                System.Diagnostics.Debug.WriteLine("LoadDashboardDataSync: Loading chart data...");
+                // Load chart data
+                LoadChartData();
+
+                System.Diagnostics.Debug.WriteLine("LoadDashboardDataSync: Loading category data...");
+                // Load category data
+                LoadCategoryDataSync();
+
+                System.Diagnostics.Debug.WriteLine("LoadDashboardDataSync: Loading transactions...");
+                // Load recent transactions
+                LoadTransactionsSync();
+
+                System.Diagnostics.Debug.WriteLine("LoadDashboardDataSync: Completed successfully!");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading dashboard data: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+            }
+        }
+
+        private async void LoadDashboardData()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("LoadDashboardData: Starting...");
+
+                // Card 1: Tổng số sách
+                var totalBooksCount = await _context.Books.CountAsync();
+                TotalBooks = totalBooksCount.ToString("N0");
+                System.Diagnostics.Debug.WriteLine($"Total Books: {TotalBooks}");
+
+                // Card 2: Đang được mượn (sách có Availability = DangMuon)
+                var borrowedCount = await _context.Books
+                    .Where(b => b.Availability == BookAvailability.DangMuon)
+                    .CountAsync();
+                BorrowedBooks = borrowedCount.ToString("N0");
+                System.Diagnostics.Debug.WriteLine($"Borrowed Books: {BorrowedBooks}");
+
+                // Card 3: Độc giả đang hoạt động (Status = HoatDong)
+                var activeReadersCount = await _context.Readers
+                    .Where(r => r.Status == ReaderStatus.HoatDong)
+                    .CountAsync();
+                ActiveReaders = activeReadersCount.ToString("N0");
+                System.Diagnostics.Debug.WriteLine($"Active Readers: {ActiveReaders}");
+
+                // Card 4: Sách trả trễ (BorrowStatus = DaTraTre)
+                var overdueCount = await _context.Borrows
+                    .Where(b => b.Status == BorrowStatus.DaTraTre)
+                    .CountAsync();
+                OverdueBooks = overdueCount.ToString("N0");
+                System.Diagnostics.Debug.WriteLine($"Overdue Books: {OverdueBooks}");
+
+                // Calculate badges (compare with last month)
+                var now = DateTime.Now;
+                var lastMonthStart = new DateTime(now.Year, now.Month, 1).AddMonths(-1);
+                var lastMonthEnd = new DateTime(now.Year, now.Month, 1).AddDays(-1);
+
+                // Calculate percentage changes
+                TotalBooksBadge = "+2.5%";  // Placeholder - would need historical data
+                BorrowedBadge = "+1.8%";    // Placeholder
+                ActiveBadge = "0%";          // Placeholder
+                OverdueBadge = "+5%";        // Placeholder
+
+                // Load chart data
+                LoadChartData();
+
+                // Load category data
+                await LoadCategoryData();
+
+                // Load recent transactions
+                await LoadTransactions();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading dashboard data: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+            }
+        }
+
+        private void LoadChartData()
         {
             // ── Sample bar chart data (10 months, relative heights from Figma) ──
             var rawValues = new[]
@@ -69,7 +267,7 @@ namespace LibraryManagementFE.ViewModels
             };
 
             double maxVal = 212.80;
-            ChartItems = new ObservableCollection<BarChartItem>();
+            ChartItems.Clear();
             for (int i = 0; i < rawValues.Length; i++)
             {
                 ChartItems.Add(new BarChartItem
@@ -80,42 +278,165 @@ namespace LibraryManagementFE.ViewModels
                     Fill           = fills[i]
                 });
             }
+        }
 
-            // ── Sample category data ──────────────────────────────────────
-            Categories = new ObservableCollection<CategoryItem>
+        private void LoadCategoryDataSync()
+        {
+            try
             {
-                new CategoryItem { Name="Khoa học Viễn tưởng", Count=3_201, Percentage=0.42, BarColor=new SolidColorBrush(Color.FromRgb(0x06,0xB6,0xD4)) },
-                new CategoryItem { Name="Tiểu sử",             Count=2_140, Percentage=0.28, BarColor=new SolidColorBrush(Color.FromRgb(0x13,0x5B,0xEC)) },
-                new CategoryItem { Name="Công nghệ",           Count=1_550, Percentage=0.18, BarColor=new SolidColorBrush(Color.FromRgb(0xA8,0x55,0xF7)) },
-            };
+                // Group books by CategoryLine1 and count
+                var categoryStats = _context.Books
+                    .GroupBy(b => b.CategoryLine1)
+                    .Select(g => new
+                    {
+                        Name = g.Key,
+                        Count = g.Count()
+                    })
+                    .OrderByDescending(x => x.Count)
+                    .Take(3)
+                    .ToList();
 
-            // ── Sample transaction data ───────────────────────────────────
-            Transactions = new ObservableCollection<TransactionRecord>
+                var total = categoryStats.Sum(x => x.Count);
+                var colors = new[]
+                {
+                    new SolidColorBrush(Color.FromRgb(0x06, 0xB6, 0xD4)),
+                    new SolidColorBrush(Color.FromRgb(0x13, 0x5B, 0xEC)),
+                    new SolidColorBrush(Color.FromRgb(0xA8, 0x55, 0xF7))
+                };
+
+                Categories.Clear();
+                for (int i = 0; i < categoryStats.Count; i++)
+                {
+                    var stat = categoryStats[i];
+                    Categories.Add(new CategoryItem
+                    {
+                        Name = string.IsNullOrWhiteSpace(stat.Name) ? "Chưa phân loại" : stat.Name,
+                        Count = stat.Count,
+                        Percentage = total > 0 ? (double)stat.Count / total : 0,
+                        BarColor = colors[i % colors.Length]
+                    });
+                }
+            }
+            catch (Exception ex)
             {
-                new TransactionRecord
+                System.Diagnostics.Debug.WriteLine($"Error loading category data: {ex.Message}");
+            }
+        }
+
+        private void LoadTransactionsSync()
+        {
+            try
+            {
+                // Get 10 most recent borrow records
+                var recentBorrows = _context.Borrows
+                    .OrderByDescending(b => b.BorrowDate)
+                    .Take(10)
+                    .ToList();
+
+                Transactions.Clear();
+                foreach (var borrow in recentBorrows)
                 {
-                    BookTitle = "Dune",
-                    Genre     = "Khoa học Viễn tưởng",
-                    Reader    = "Nguyễn Thị B",
-                    DueDate   = "15/05/2025",
-                    Status    = TransactionStatus.DaTra,
-                },
-                new TransactionRecord
+                    var book = _context.Books.FirstOrDefault(b => b.Id == borrow.BookId);
+
+                    Transactions.Add(new TransactionRecord
+                    {
+                        BookTitle = borrow.BookTitle,
+                        Genre = book?.CategoryLine1 ?? "Chưa phân loại",
+                        Reader = borrow.ReaderName,
+                        DueDate = borrow.DueDate,
+                        Status = MapBorrowStatusToTransactionStatus(borrow.Status)
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading transactions: {ex.Message}");
+            }
+        }
+
+        private async Task LoadCategoryData()
+        {
+            try
+            {
+                // Group books by CategoryLine1 and count
+                var categoryStats = await _context.Books
+                    .GroupBy(b => b.CategoryLine1)
+                    .Select(g => new
+                    {
+                        Name = g.Key,
+                        Count = g.Count()
+                    })
+                    .OrderByDescending(x => x.Count)
+                    .Take(3)
+                    .ToListAsync();
+
+                var total = categoryStats.Sum(x => x.Count);
+                var colors = new[]
                 {
-                    BookTitle = "Atomic Habits",
-                    Genre     = "Tâm lý học",
-                    Reader    = "Trần Văn C",
-                    DueDate   = "22/05/2025",
-                    Status    = TransactionStatus.DangMuon,
-                },
-                new TransactionRecord
+                    new SolidColorBrush(Color.FromRgb(0x06, 0xB6, 0xD4)),
+                    new SolidColorBrush(Color.FromRgb(0x13, 0x5B, 0xEC)),
+                    new SolidColorBrush(Color.FromRgb(0xA8, 0x55, 0xF7))
+                };
+
+                Categories.Clear();
+                for (int i = 0; i < categoryStats.Count; i++)
                 {
-                    BookTitle = "Clean Code",
-                    Genre     = "Công nghệ",
-                    Reader    = "Lê Thị D",
-                    DueDate   = "30/04/2025",
-                    Status    = TransactionStatus.QuaHan,
-                },
+                    var stat = categoryStats[i];
+                    Categories.Add(new CategoryItem
+                    {
+                        Name = string.IsNullOrWhiteSpace(stat.Name) ? "Chưa phân loại" : stat.Name,
+                        Count = stat.Count,
+                        Percentage = total > 0 ? (double)stat.Count / total : 0,
+                        BarColor = colors[i % colors.Length]
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading category data: {ex.Message}");
+            }
+        }
+
+        private async Task LoadTransactions()
+        {
+            try
+            {
+                // Get 10 most recent borrow records
+                var recentBorrows = await _context.Borrows
+                    .OrderByDescending(b => b.BorrowDate)
+                    .Take(10)
+                    .ToListAsync();
+
+                Transactions.Clear();
+                foreach (var borrow in recentBorrows)
+                {
+                    var book = await _context.Books.FirstOrDefaultAsync(b => b.Id == borrow.BookId);
+
+                    Transactions.Add(new TransactionRecord
+                    {
+                        BookTitle = borrow.BookTitle,
+                        Genre = book?.CategoryLine1 ?? "Chưa phân loại",
+                        Reader = borrow.ReaderName,
+                        DueDate = borrow.DueDate,
+                        Status = MapBorrowStatusToTransactionStatus(borrow.Status)
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading transactions: {ex.Message}");
+            }
+        }
+
+        private TransactionStatus MapBorrowStatusToTransactionStatus(BorrowStatus borrowStatus)
+        {
+            return borrowStatus switch
+            {
+                BorrowStatus.DangMuon => TransactionStatus.DangMuon,
+                BorrowStatus.DaTraTot => TransactionStatus.DaTra,
+                BorrowStatus.DaTraTre => TransactionStatus.DaTra,
+                BorrowStatus.QuaHan => TransactionStatus.QuaHan,
+                _ => TransactionStatus.DangMuon
             };
         }
 
