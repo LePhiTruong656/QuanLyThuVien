@@ -27,3 +27,6 @@ Thumbs.db
 ## Local database / secrets (do not commit)
 appsettings.Development.json
 Data/library-data.json
+
+# Run
+LibraryApp.exe
