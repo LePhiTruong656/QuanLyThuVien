@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -26,7 +26,7 @@ namespace LibraryManagementFE.ViewModels
         private bool _showFilterPanel;
         private bool _isReturning;
         private int _currentPage = 1;
-        private int _pageSize = 12;
+        private int _pageSize = 5;
         private int _totalPages = 1;
 
         public ObservableCollection<BorrowRecord> Borrows { get; } = new();

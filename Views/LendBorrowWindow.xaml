@@ -1,8 +1,8 @@
-<Window x:Class="LibraryManagementFE.Views.LendBorrowWindow"
+﻿<Window x:Class="LibraryManagementFE.Views.LendBorrowWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
-        Title="Lập phiếu mượn"
+        Title="Láº­p phiáº¿u mÆ°á»£n"
         Width="620"
         SizeToContent="Height"
         ResizeMode="NoResize"
@@ -151,8 +151,8 @@
 						</StackPanel>
 
 						<StackPanel Grid.Column="2">
-							<TextBlock Style="{StaticResource FormLabel}" Text="Số ngày mượn (mặc định 4)"/>
-							<TextBox x:Name="LoanDaysTextBox" Style="{StaticResource FormTextBox}" Text="4"/>
+							<TextBlock Style="{StaticResource FormLabel}" Text="{Binding LoanDaysLabel}"/>
+							<TextBox x:Name="LoanDaysTextBox" Style="{StaticResource FormTextBox}" />
 						</StackPanel>
 					</Grid>
 				</StackPanel>
@@ -187,3 +187,4 @@
 		</Grid>
 	</Border>
 </Window>
+
