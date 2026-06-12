@@ -16,8 +16,8 @@ namespace LibraryManagementFE.Data
             var basePath = ResolveConfigDirectory();
             var config = new ConfigurationBuilder()
                 .SetBasePath(basePath)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: false)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                 .Build();
 
             return config.GetConnectionString(ConnectionStringName)
