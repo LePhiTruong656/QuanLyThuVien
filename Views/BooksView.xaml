@@ -141,11 +141,18 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="STT"
                                                 Binding="{Binding Stt}"
-                                                Width="64">
+                                                Width="80">
+                                <DataGridTextColumn.CellStyle>
+                                    <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCellStyle}">
+                                        <Setter Property="Padding" Value="12,0"/>
+                                    </Style>
+                                </DataGridTextColumn.CellStyle>
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Body}">
                                         <Setter Property="Foreground" Value="#475569"/>
                                         <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="TextAlignment" Value="Center"/>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
@@ -366,7 +373,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Button Content="{Binding Number}"
+                                            <Button Content="{Binding DisplayText}"
                                                     Command="{Binding DataContext.GoToPageCommand,
                                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding Number}"
@@ -378,6 +385,12 @@
                                                                 <Setter Property="Background" Value="#005AB4"/>
                                                                 <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
                                                                 <Setter Property="FontWeight" Value="Bold"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsEllipsis}" Value="True">
+                                                                <Setter Property="IsHitTestVisible" Value="False"/>
+                                                                <Setter Property="Background" Value="Transparent"/>
+                                                                <Setter Property="BorderThickness" Value="0"/>
+                                                                <Setter Property="Foreground" Value="#64748B"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -493,3 +506,6 @@
         </StackPanel>
     </ScrollViewer>
 </UserControl>
+
+
+

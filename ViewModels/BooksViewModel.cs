@@ -330,10 +330,57 @@ namespace LibraryManagementFE.ViewModels
         private void RefreshPageNumbers()
         {
             PageNumbers.Clear();
-            for (var page = 1; page <= TotalPages; page++)
+
+            foreach (var item in BuildPageNumberItems())
             {
-                PageNumbers.Add(new PageNumberItem(page, page == CurrentPage));
+                PageNumbers.Add(item);
             }
+        }
+
+        private IEnumerable<PageNumberItem> BuildPageNumberItems()
+        {
+            if (TotalPages <= 7)
+            {
+                for (var page = 1; page <= TotalPages; page++)
+                {
+                    yield return PageNumberItem.CreatePage(page, page == CurrentPage);
+                }
+
+                yield break;
+            }
+
+            yield return PageNumberItem.CreatePage(1, CurrentPage == 1);
+
+            var start = Math.Max(2, CurrentPage - 1);
+            var end = Math.Min(TotalPages - 1, CurrentPage + 1);
+
+            if (CurrentPage <= 3)
+            {
+                start = 2;
+                end = 4;
+            }
+            else if (CurrentPage >= TotalPages - 2)
+            {
+                start = TotalPages - 3;
+                end = TotalPages - 1;
+            }
+
+            if (start > 2)
+            {
+                yield return PageNumberItem.CreateEllipsis();
+            }
+
+            for (var page = start; page <= end; page++)
+            {
+                yield return PageNumberItem.CreatePage(page, page == CurrentPage);
+            }
+
+            if (end < TotalPages - 1)
+            {
+                yield return PageNumberItem.CreateEllipsis();
+            }
+
+            yield return PageNumberItem.CreatePage(TotalPages, CurrentPage == TotalPages);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -343,13 +390,25 @@ namespace LibraryManagementFE.ViewModels
 
     public class PageNumberItem
     {
-        public PageNumberItem(int number, bool isCurrent)
+        private PageNumberItem(int? number, bool isCurrent, bool isEllipsis)
         {
             Number = number;
             IsCurrent = isCurrent;
+            IsEllipsis = isEllipsis;
         }
 
-        public int Number { get; }
+        public int? Number { get; }
         public bool IsCurrent { get; }
+        public bool IsEllipsis { get; }
+        public string DisplayText => IsEllipsis ? "..." : Number?.ToString() ?? string.Empty;
+
+        public static PageNumberItem CreatePage(int number, bool isCurrent)
+            => new(number, isCurrent, false);
+
+        public static PageNumberItem CreateEllipsis()
+            => new(null, false, true);
     }
 }
+
+
+
