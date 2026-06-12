@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using LibraryManagementFE.Models;
+using LibraryManagementFE.Policies;
 
 namespace LibraryManagementFE.Views
 {
@@ -15,6 +16,7 @@ namespace LibraryManagementFE.Views
 
         private ObservableCollection<ReaderRecord> _readers = new();
         private ObservableCollection<BookRecord> _availableBooks = new();
+        private readonly LibraryPolicy _policy;
 
         public ObservableCollection<ReaderRecord> Readers
         {
@@ -42,16 +44,20 @@ namespace LibraryManagementFE.Views
         public ReaderRecord? SelectedReader { get; set; }
         public BookRecord? SelectedBook { get; set; }
         public int LoanDays { get; private set; } = 14;
+        public string LoanDaysLabel => $"Số ngày mượn (tối đa {_policy.MaxLoanDays} ngày)";
         public DateTime BorrowDate { get; private set; } = DateTime.Now;
 
         public LendBorrowWindow()
         {
+            _policy = LibraryPolicyStore.LoadOrCreate();
+            LoanDays = _policy.MaxLoanDays;
             InitializeComponent();
             DataContext = this;
 
             _readerViewSource.Filter += ReaderFilter;
             _bookViewSource.Filter += BookFilter;
             BorrowDatePicker.SelectedDate = DateTime.Now;
+            LoanDaysTextBox.Text = LoanDays.ToString();
         }
 
         private void ReaderFilter(object sender, FilterEventArgs e)
@@ -146,9 +152,18 @@ namespace LibraryManagementFE.Views
                 ErrorTextBlock.Visibility = Visibility.Visible;
                 return;
             }
+
+            if (days > _policy.MaxLoanDays)
+            {
+                ErrorTextBlock.Text = $"Số ngày mượn không được vượt quá {_policy.MaxLoanDays} ngày theo quy định.";
+                ErrorTextBlock.Visibility = Visibility.Visible;
+                return;
+            }
             LoanDays = days;
             BorrowDate = BorrowDatePicker.SelectedDate ?? DateTime.Now;
             DialogResult = true;
         }
     }
 }
+
+

@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
@@ -293,7 +293,7 @@ namespace LibraryManagementFE.ViewModels
                         Count = g.Count()
                     })
                     .OrderByDescending(x => x.Count)
-                    .Take(3)
+                    .Take(5)
                     .ToList();
 
                 var total = categoryStats.Sum(x => x.Count);
@@ -330,7 +330,7 @@ namespace LibraryManagementFE.ViewModels
                 // Get 10 most recent borrow records
                 var recentBorrows = _context.Borrows
                     .OrderByDescending(b => b.BorrowDate)
-                    .Take(10)
+                    .Take(5)
                     .ToList();
 
                 Transactions.Clear();
@@ -367,7 +367,7 @@ namespace LibraryManagementFE.ViewModels
                         Count = g.Count()
                     })
                     .OrderByDescending(x => x.Count)
-                    .Take(3)
+                    .Take(5)
                     .ToListAsync();
 
                 var total = categoryStats.Sum(x => x.Count);
@@ -404,7 +404,7 @@ namespace LibraryManagementFE.ViewModels
                 // Get 10 most recent borrow records
                 var recentBorrows = await _context.Borrows
                     .OrderByDescending(b => b.BorrowDate)
-                    .Take(10)
+                    .Take(5)
                     .ToListAsync();
 
                 Transactions.Clear();
