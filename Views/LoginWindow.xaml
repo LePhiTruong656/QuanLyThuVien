@@ -363,9 +363,10 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <Button Style="{StaticResource GlassSocialButton}"
+                            <Button x:Name="BtnGoogleLogin"
+                                    Style="{StaticResource GlassSocialButton}"
                                     Grid.Column="0" Height="44"
-                                    Click="BtnSocialLogin_Click">
+                                    Click="BtnGoogleLogin_Click">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="G"
                                                FontFamily="{StaticResource InterFont}"
@@ -379,9 +380,10 @@
                                 </StackPanel>
                             </Button>
 
-                            <Button Style="{StaticResource GlassSocialButton}"
+                            <Button x:Name="BtnFacebookLogin"
+                                    Style="{StaticResource GlassSocialButton}"
                                     Grid.Column="2" Height="44"
-                                    Click="BtnSocialLogin_Click">
+                                    Click="BtnFacebookLogin_Click">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="f"
                                                FontFamily="{StaticResource InterFont}"

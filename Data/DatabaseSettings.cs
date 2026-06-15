@@ -13,7 +13,7 @@ namespace LibraryManagementFE.Data
             if (!string.IsNullOrWhiteSpace(fromEnv))
                 return fromEnv;
 
-            var basePath = ResolveConfigDirectory();
+            var basePath = ResolveConfigDirectoryForApp();
             var config = new ConfigurationBuilder()
                 .SetBasePath(basePath)
                 .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: false)
@@ -25,7 +25,7 @@ namespace LibraryManagementFE.Data
                     $"Connection string '{ConnectionStringName}' is missing. Set it in appsettings.json or LIBRARY_DB_CONNECTION.");
         }
 
-        private static string ResolveConfigDirectory()
+        public static string ResolveConfigDirectoryForApp()
         {
             foreach (var candidate in new[]
             {
