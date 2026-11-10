@@ -1,5 +1,18 @@
 {
   "ConnectionStrings": {
     "LibraryDb": "Server=YOUR_SERVER;Database=QuanLyThuVien;User Id=YOUR_USER;Password=YOUR_PASSWORD;TrustServerCertificate=True"
+  },
+  "OAuth": {
+    "DevMode": true,
+    "Google": {
+      "ClientId": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+      "ClientSecret": ""
+    },
+    "Facebook": {
+      "AppId": "YOUR_FACEBOOK_APP_ID",
+      "AppSecret": "YOUR_FACEBOOK_APP_SECRET"
+    },
+    "RedirectPort": 7890,
+    "RedirectPath": "/oauth/callback"
   }
 }

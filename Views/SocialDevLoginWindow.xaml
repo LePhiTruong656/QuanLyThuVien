@@ -1,0 +1,47 @@
+<Window x:Class="LibraryManagementFE.Views.SocialDevLoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Đăng nhập thử nghiệm"
+        Width="440" Height="320"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource BrandGradientBrush}">
+    <Border Background="#22FFFFFF" BorderBrush="#44FFFFFF" BorderThickness="1"
+            CornerRadius="20" Margin="24">
+        <StackPanel Margin="28">
+            <TextBlock x:Name="TxtTitle"
+                       Text="Đăng nhập Google (Dev)"
+                       FontFamily="{StaticResource InterFont}"
+                       FontSize="22" FontWeight="Bold"
+                       Foreground="#FFFFFF" Margin="0,0,0,8"/>
+            <TextBlock x:Name="TxtDescription"
+                       Text="Chế độ phát triển: nhập email để mô phỏng đăng nhập. Khi có Client ID thật, tắt DevMode trong appsettings.Development.json."
+                       FontFamily="{StaticResource InterFont}"
+                       FontSize="13" Foreground="#B3FFFFFF"
+                       TextWrapping="Wrap" LineHeight="20" Margin="0,0,0,20"/>
+
+            <TextBlock Text="Email"
+                       FontFamily="{StaticResource InterFont}"
+                       FontSize="13" FontWeight="SemiBold"
+                       Foreground="#FFFFFF" Margin="0,0,0,8"/>
+            <TextBox x:Name="TxtEmail"
+                     Style="{StaticResource GlassTextBox}"
+                     Height="48" VerticalContentAlignment="Center"
+                     Padding="14,12,12,12" Margin="0,0,0,24"/>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Hủy"
+                        Style="{StaticResource WhiteTextLink}"
+                        Height="44" Click="BtnCancel_Click"/>
+                <Button Grid.Column="2" Content="Tiếp tục →"
+                        Style="{StaticResource WhiteLoginButton}"
+                        Height="44" Click="BtnContinue_Click"/>
+            </Grid>
+        </StackPanel>
+    </Border>
+</Window>

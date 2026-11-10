@@ -2,7 +2,10 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using LibraryManagementFE.Data;
 using LibraryManagementFE.Models;
 using LibraryManagementFE.Services;
@@ -13,8 +16,11 @@ namespace LibraryManagementFE.Views
     public partial class LoginWindow : Window, INotifyPropertyChanged
     {
         private bool _isPasswordVisible = false;
+        private bool _isSocialLoginInProgress;
         private readonly LibraryDbContext _context;
         private readonly AuthService _authService;
+        private readonly SocialAuthService _socialAuthService = new();
+        private CancellationTokenSource? _socialLoginCts;
 
         // Statistics properties
         private string _totalBooks = "0";
@@ -51,6 +57,16 @@ namespace LibraryManagementFE.Views
             optionsBuilder.UseSqlServer(DatabaseSettings.GetConnectionString());
             _context = new LibraryDbContext(optionsBuilder.Options);
             _authService = new AuthService(_context);
+
+            try
+            {
+                UserTableSyncService.Sync(_context);
+                _context.Database.Migrate();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Database migration: {ex.Message}");
+            }
 
             // Load statistics
             LoadStatistics();
@@ -171,34 +187,131 @@ namespace LibraryManagementFE.Views
                 return;
             }
 
-            // Lưu credentials nếu user chọn Remember Me
             bool rememberMe = ChkRememberMe.IsChecked == true;
             SaveCredentials(email, password, rememberMe);
 
-            // Lấy thông tin reader nếu có
-            var reader = _authService.GetReaderByUserId(result.user!.Id);
+            OpenMainWindow(result.user!);
+        }
 
-            // Lưu thông tin user và reader vào session
-            CurrentUser.SetUser(result.user!, reader);
+        private void OpenMainWindow(User user)
+        {
+            var reader = _authService.GetReaderByUserId(user.Id);
+            CurrentUser.SetUser(user, reader);
 
-            // Đăng nhập thành công
             MessageBox.Show($"Chào mừng {CurrentUser.GetDisplayName()} trở lại!",
                 "Đăng nhập thành công", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            MainWindow mainWindow = new MainWindow();
+            var mainWindow = new MainWindow();
             mainWindow.Show();
-            this.Close();
+            Close();
         }
 
         protected override void OnClosed(EventArgs e)
         {
+            _socialLoginCts?.Cancel();
+            _socialLoginCts?.Dispose();
             base.OnClosed(e);
             _context?.Dispose();
         }
 
-        private void BtnSocialLogin_Click(object sender, RoutedEventArgs e)
+        private async void BtnGoogleLogin_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Chức năng đang được phát triển.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            await RunSocialLoginAsync(
+                AuthProviders.Google,
+                async (settings, ct) => await _socialAuthService.LoginWithGoogleAsync(settings, ct));
+        }
+
+        private async void BtnFacebookLogin_Click(object sender, RoutedEventArgs e)
+        {
+            await RunSocialLoginAsync(
+                AuthProviders.Facebook,
+                async (settings, ct) => await _socialAuthService.LoginWithFacebookAsync(settings, ct));
+        }
+
+        private async Task RunSocialLoginAsync(
+            string provider,
+            Func<OAuthSettings, CancellationToken, Task<(bool success, string message, SocialLoginProfile? profile)>> authenticate)
+        {
+            if (_isSocialLoginInProgress)
+                return;
+
+            var settings = AppConfiguration.GetOAuthSettings();
+            var isConfigured = provider == AuthProviders.Google
+                ? settings.IsGoogleConfigured
+                : settings.IsFacebookConfigured;
+
+            _isSocialLoginInProgress = true;
+            SetSocialLoginBusy(true);
+            _socialLoginCts = new CancellationTokenSource();
+
+            try
+            {
+                (bool success, string message, SocialLoginProfile? profile) authResult;
+
+                if (!isConfigured && settings.DevMode)
+                {
+                    authResult = TryDevSocialLogin(provider);
+                }
+                else
+                {
+                    Mouse.OverrideCursor = Cursors.Wait;
+                    authResult = await authenticate(settings, _socialLoginCts.Token);
+                }
+
+                if (!authResult.success || authResult.profile == null)
+                {
+                    MessageBox.Show(authResult.message, "Đăng nhập thất bại",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var loginResult = _authService.LoginOrRegisterSocial(authResult.profile);
+                if (!loginResult.success || loginResult.user == null)
+                {
+                    MessageBox.Show(loginResult.message, "Đăng nhập thất bại",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                OpenMainWindow(loginResult.user);
+            }
+            finally
+            {
+                Mouse.OverrideCursor = null;
+                SetSocialLoginBusy(false);
+                _isSocialLoginInProgress = false;
+                _socialLoginCts?.Dispose();
+                _socialLoginCts = null;
+            }
+        }
+
+        private (bool success, string message, SocialLoginProfile? profile) TryDevSocialLogin(string provider)
+        {
+            var providerName = AuthProviders.GetDisplayName(provider);
+            var dialog = new SocialDevLoginWindow(providerName, TxtEmail.Text.Trim())
+            {
+                Owner = this
+            };
+
+            if (dialog.ShowDialog() != true)
+                return (false, $"Đã hủy đăng nhập {providerName}.", null);
+
+            var email = dialog.Email.Trim().ToLowerInvariant();
+            var localPart = email.Split('@')[0];
+
+            return (true, $"Đăng nhập {providerName} thành công (chế độ dev).", new SocialLoginProfile
+            {
+                Provider = provider,
+                ExternalId = $"dev-{provider}-{email}",
+                Email = email,
+                Name = localPart
+            });
+        }
+
+        private void SetSocialLoginBusy(bool isBusy)
+        {
+            BtnGoogleLogin.IsEnabled = !isBusy;
+            BtnFacebookLogin.IsEnabled = !isBusy;
         }
 
         private void BtnForgotPassword_Click(object sender, RoutedEventArgs e)
